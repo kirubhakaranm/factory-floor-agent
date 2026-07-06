@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="doc-title">8D Problem Solving Report</div>
+<div class="doc-subtitle">{{ meta.title }}</div>
+
+<div class="section">
+  <div class="field"><span class="field-label">Related Failure:</span> <span class="field-value">{{ doc.related_failure_id or 'N/A' }}</span></div>
+  <div class="field"><span class="field-label">Station:</span> <span class="field-value">{{ doc.related_station_id or 'N/A' }}</span></div>
+  <div class="field"><span class="field-label">Affected Models:</span> <span class="field-value">{{ doc.affected_models|join(', ') or 'All' }}</span></div>
+  <div class="field"><span class="field-label">Units Affected:</span> <span class="field-value">{{ doc.units_affected }}</span></div>
+  <div class="field"><span class="field-label">Cost Impact:</span> <span class="field-value">${{ '{:,.2f}'.format(doc.cost_impact) }}</span></div>
+</div>
+
+<div class="section">
+  <div class="section-title">D1 — Team</div>
+  <ul>{% for member in doc.d1_team %}<li>{{ member }}</li>{% endfor %}</ul>
+</div>
+
+<div class="section">
+  <div class="section-title">D2 — Problem Description</div>
+  <p>{{ doc.d2_problem }}</p>
+</div>
+
+<div class="section">
+  <div class="section-title">D3 — Containment Actions</div>
+  <div class="highlight-box">{{ doc.d3_containment }}</div>
+</div>
+
+<div class="section">
+  <div class="section-title">D4 — Root Cause Analysis</div>
+  <div class="danger-box">{{ doc.d4_root_cause }}</div>
+</div>
+
+<div class="section">
+  <div class="section-title">D5 — Corrective Actions</div>
+  <p>{{ doc.d5_corrective_actions }}</p>
+</div>
+
+<div class="section">
+  <div class="section-title">D6 — Verification</div>
+  <p>{{ doc.d6_verification }}</p>
+</div>
+
+<div class="section">
+  <div class="section-title">D7 — Preventive Actions</div>
+  <p>{{ doc.d7_preventive_actions }}</p>
+</div>
+
+<div class="section">
+  <div class="section-title">D8 — Closure</div>
+  <p>{{ doc.d8_closure }}</p>
+</div>
+
+<div class="approval-block">
+  <div class="section-title">Approvals</div>
+  <div style="margin-top: 20px;">
+    <div class="approval-line"></div> <div class="approval-line"></div><br>
+    <span style="font-size: 8pt; color: #64748b;">Quality Manager — Date &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Plant Manager — Date</span>
+  </div>
+</div>
+{% endblock %}

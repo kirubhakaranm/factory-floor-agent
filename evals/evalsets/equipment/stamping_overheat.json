@@ -1,0 +1,84 @@
+[
+  {
+    "id": "EQ-001",
+    "query": "Press 1 hydraulic oil temperature is reading 72°C. Is this a problem?",
+    "expected_agent": "equipment_agent",
+    "expected_tools": ["get_current_readings", "get_sensor_trend", "search_sop"],
+    "ground_truth": {
+      "key_facts": [
+        "72°C exceeds the max normal operating range of 65°C for hydraulic presses",
+        "Normal operating range is 35-65°C",
+        "This indicates potential cooler fan failure, high ambient temperature, or excessive cycling"
+      ],
+      "expected_recommendation": "Reduce cycle rate, check cooler fans, verify coolant flow",
+      "severity": "major"
+    }
+  },
+  {
+    "id": "EQ-002",
+    "query": "Why does Press 1 keep breaking down? It's had 3 failures this month.",
+    "expected_agent": "equipment_agent",
+    "expected_tools": ["get_failure_history", "get_mtbf_mttr", "search_past_issues", "get_spare_parts"],
+    "ground_truth": {
+      "key_facts": [
+        "MTBF has dropped significantly indicating accelerating degradation",
+        "Should check for pattern in failure modes — repeat failures suggest systemic root cause",
+        "Reference ISSUE-2025-003 which documented similar repeated pump failures due to oil contamination"
+      ],
+      "expected_recommendation": "Check hydraulic oil particle count, review filter maintenance schedule, stock spare pumps"
+    }
+  },
+  {
+    "id": "EQ-003",
+    "query": "What's the remaining useful life on the hydraulic pump for Press 1?",
+    "expected_agent": "equipment_agent",
+    "expected_tools": ["get_degradation_status", "get_maintenance_history"],
+    "ground_truth": {
+      "key_facts": [
+        "Health index from degradation state indicates remaining useful life",
+        "Should reference maintenance history to see when pump was last replaced",
+        "RUL prediction based on degradation curve trend"
+      ]
+    }
+  },
+  {
+    "id": "EQ-004",
+    "query": "Give me the reliability report for the Stamping stage",
+    "expected_agent": "equipment_agent",
+    "expected_tools": ["get_reliability_report"],
+    "ground_truth": {
+      "key_facts": [
+        "Report should cover all machines at STP-01-PRS, STP-02-PRS, STP-03-TRM",
+        "Should include MTBF, MTTR, availability percentage per machine",
+        "Should flag any machine with MTBF below 200 hours or MTTR above 4 hours"
+      ]
+    }
+  },
+  {
+    "id": "EQ-005",
+    "query": "What's the energy consumption trend for Press 1 this week?",
+    "expected_agent": "equipment_agent",
+    "expected_tools": ["get_energy_consumption", "get_energy_trend"],
+    "ground_truth": {
+      "key_facts": [
+        "Should show daily power draw pattern",
+        "Should identify if consumption is rising, falling, or stable",
+        "Abnormal energy consumption can indicate mechanical issues"
+      ]
+    }
+  },
+  {
+    "id": "EQ-006",
+    "query": "Station WLD-01-UBD Robot 1 vibration has been increasing over the last 48 hours. What should we do?",
+    "expected_agent": "equipment_agent",
+    "expected_tools": ["fetch_sensor_data", "get_sensor_trend", "get_degradation_status", "search_equipment_manual"],
+    "ground_truth": {
+      "key_facts": [
+        "Increasing vibration on a robot typically indicates joint reducer wear or bearing degradation",
+        "Should check the vibration trend magnitude against normal range (0.1-2.0 mm/s for robots)",
+        "Reference equipment manual for Fanuc R-2000iC reducer inspection procedure"
+      ],
+      "expected_recommendation": "Schedule inspection of joint reducers, measure backlash, plan for possible reducer replacement"
+    }
+  }
+]

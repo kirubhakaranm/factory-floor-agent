@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="doc-title">Work Order</div>
+<div class="doc-subtitle">{{ meta.title }}</div>
+
+<div class="section">
+  <table>
+    <tr><th style="width:30%">Field</th><th>Value</th></tr>
+    <tr><td>Machine ID</td><td><strong>{{ doc.machine_id }}</strong></td></tr>
+    <tr><td>Machine Model</td><td>{{ doc.machine_model }}</td></tr>
+    <tr><td>Station</td><td>{{ doc.station_id }}</td></tr>
+    <tr><td>Type</td><td>{{ doc.wo_type|upper }}</td></tr>
+    <tr><td>Priority</td><td><span class="severity-{{ doc.priority }}">{{ doc.priority|upper }}</span></td></tr>
+    <tr><td>Assigned To</td><td>{{ doc.assigned_to }}</td></tr>
+    <tr><td>Estimated Duration</td><td>{{ doc.estimated_duration_min }} minutes</td></tr>
+    {% if doc.related_failure_id %}<tr><td>Related Failure</td><td>{{ doc.related_failure_id }}</td></tr>{% endif %}
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">Description</div>
+  <p>{{ doc.description }}</p>
+</div>
+
+{% if doc.tasks %}
+<div class="section">
+  <div class="section-title">Tasks</div>
+  <table>
+    <tr><th style="width:5%">#</th><th>Task Description</th><th style="width:15%">Completed</th></tr>
+    {% for task in doc.tasks %}
+    <tr><td>{{ loop.index }}</td><td>{{ task }}</td><td style="text-align:center">&#9744;</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if doc.parts_required %}
+<div class="section">
+  <div class="section-title">Parts Required</div>
+  <table>
+    <tr><th>Part Number</th><th>Description</th><th>Qty</th><th>Location</th></tr>
+    {% for part in doc.parts_required %}
+    <tr><td>{{ part.part_number }}</td><td>{{ part.description }}</td><td>{{ part.quantity }}</td><td>{{ part.location or 'TBD' }}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if doc.safety_requirements %}
+<div class="section">
+  <div class="section-title">Safety Requirements</div>
+  <div class="danger-box">
+    <ul>{% for req in doc.safety_requirements %}<li>{{ req }}</li>{% endfor %}</ul>
+  </div>
+</div>
+{% endif %}
+
+<div class="approval-block">
+  <div class="section-title">Completion Sign-Off</div>
+  <div style="margin-top: 20px;">
+    <div class="approval-line"></div> <div class="approval-line"></div><br>
+    <span style="font-size: 8pt; color: #64748b;">Technician — Date &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Maintenance Lead — Date</span>
+  </div>
+</div>
+{% endblock %}

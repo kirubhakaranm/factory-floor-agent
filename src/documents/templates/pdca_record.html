@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="doc-title">PDCA Improvement Record</div>
+<div class="doc-subtitle">{{ meta.title }}</div>
+
+<div class="section">
+  <div class="section-title">Problem / Opportunity</div>
+  <p>{{ doc.problem }}</p>
+  {% if doc.fmea_reference %}<div class="field"><span class="field-label">FMEA Reference:</span> <span class="field-value">{{ doc.fmea_reference }}</span></div>{% endif %}
+</div>
+
+<div class="section">
+  <div class="section-title">PLAN</div>
+  <div class="field"><span class="field-label">Description:</span> <span class="field-value">{{ doc.plan_description }}</span></div>
+  <div class="field"><span class="field-label">Hypothesis:</span> <span class="field-value">{{ doc.plan_hypothesis }}</span></div>
+  {% if doc.plan_metrics %}
+  <div class="field"><span class="field-label">Key Metrics:</span></div>
+  <ul>{% for m in doc.plan_metrics %}<li>{{ m }}</li>{% endfor %}</ul>
+  {% endif %}
+</div>
+
+<div class="section">
+  <div class="section-title">DO</div>
+  <div class="field"><span class="field-label">Action Taken:</span> <span class="field-value">{{ doc.do_action }}</span></div>
+  <div class="field"><span class="field-label">Implementation Date:</span> <span class="field-value">{{ doc.do_date }}</span></div>
+</div>
+
+<div class="section">
+  <div class="section-title">CHECK — Before vs. After</div>
+  {% if doc.check_before %}
+  <table>
+    <tr><th>Metric</th><th>Before</th><th>After</th><th>Change</th></tr>
+    {% for key in doc.check_before %}
+    <tr>
+      <td>{{ key }}</td>
+      <td>{{ doc.check_before[key] }}</td>
+      <td>{{ doc.check_after.get(key, 'N/A') }}</td>
+      <td>
+        {% set change = doc.check_change_pct.get(key, 'N/A') %}
+        {% if change != 'N/A' %}
+          <span style="color: {{ '#22c55e' if '+' in change|string or change|float > 0 else '#dc2626' }}">{{ change }}</span>
+        {% else %}
+          {{ change }}
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  <div class="field"><span class="field-label">Statistical Confidence:</span> <span class="field-value">{{ doc.check_statistical_confidence }}</span></div>
+  <div class="field"><span class="field-label">Side Effects:</span> <span class="field-value">{{ doc.check_side_effects }}</span></div>
+</div>
+
+<div class="section">
+  <div class="section-title">ACT — Decision</div>
+  {% if doc.act_decision == 'standardize' %}
+  <div class="success-box"><strong>STANDARDIZE</strong> — {{ doc.act_rationale }}</div>
+  {% elif doc.act_decision == 'modify' %}
+  <div class="highlight-box"><strong>MODIFY</strong> — {{ doc.act_rationale }}</div>
+  {% elif doc.act_decision == 'revert' %}
+  <div class="danger-box"><strong>REVERT</strong> — {{ doc.act_rationale }}</div>
+  {% endif %}
+  {% if doc.act_next_steps %}
+  <div class="field"><span class="field-label">Next Steps:</span></div>
+  <ul>{% for step in doc.act_next_steps %}<li>{{ step }}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if doc.follow_up_date %}<div class="field"><span class="field-label">Follow-Up Date:</span> <span class="field-value">{{ doc.follow_up_date }}</span></div>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="doc-title">Maintenance Notification</div>
+<div class="doc-subtitle">{{ meta.title }}</div>
+
+<div class="highlight-box">
+  <strong>Scheduled Maintenance:</strong> {{ doc.machine_id }} ({{ doc.machine_model }}) at Station {{ doc.station_id }}<br>
+  <strong>Date:</strong> {{ doc.scheduled_date }} | <strong>Duration:</strong> {{ doc.estimated_duration }} | <strong>Type:</strong> {{ doc.maintenance_type|title }}
+</div>
+
+<div class="section">
+  <div class="section-title">Details</div>
+  <table>
+    <tr><th style="width:30%">Field</th><th>Value</th></tr>
+    <tr><td>Machine</td><td><strong>{{ doc.machine_id }}</strong> — {{ doc.machine_model }}</td></tr>
+    <tr><td>Station</td><td>{{ doc.station_id }}</td></tr>
+    <tr><td>Maintenance Type</td><td>{{ doc.maintenance_type|title }}</td></tr>
+    <tr><td>Scheduled Date</td><td>{{ doc.scheduled_date }}</td></tr>
+    <tr><td>Estimated Duration</td><td>{{ doc.estimated_duration }}</td></tr>
+    <tr><td>Shift Affected</td><td>{{ doc.shift_affected or 'TBD' }}</td></tr>
+    <tr><td>Parts Pre-Staged</td><td>{{ 'Yes' if doc.parts_pre_staged else 'No' }}</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">Production Impact</div>
+  <p>{{ doc.production_impact }}</p>
+  {% if doc.alternate_routing %}<p><strong>Alternate Routing:</strong> {{ doc.alternate_routing }}</p>{% endif %}
+</div>
+
+<div class="section">
+  <div class="section-title">Tasks Summary</div>
+  <p>{{ doc.tasks_summary }}</p>
+</div>
+
+<div class="section">
+  <div class="section-title">Acknowledgment</div>
+  <div style="margin-top: 15px;">
+    <div class="approval-line"></div><br>
+    <span style="font-size: 8pt; color: #64748b;">Production Supervisor — Date</span>
+  </div>
+</div>
+{% endblock %}

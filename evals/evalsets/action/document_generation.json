@@ -1,0 +1,82 @@
+[
+  {
+    "id": "AC-001",
+    "query": "Create a work order for hydraulic pump inspection on Press 1",
+    "expected_agent": "action_agent",
+    "expected_tools": ["create_work_order"],
+    "ground_truth": {
+      "key_facts": [
+        "Machine ID should be STP-01-PRS-HYP01",
+        "Type should be predictive or preventive",
+        "Should include specific inspection tasks"
+      ]
+    }
+  },
+  {
+    "id": "AC-002",
+    "query": "Write an 8D report for the weld porosity issue at Station WLD-01-UBD",
+    "expected_agent": "action_agent",
+    "expected_tools": ["create_8d_report", "search_past_issues", "search_sop"],
+    "ground_truth": {
+      "key_facts": [
+        "Should reference ISSUE-2025-001 for historical context",
+        "All 8 disciplines must be addressed",
+        "Root cause should be specific (zinc coating weight variation)"
+      ]
+    }
+  },
+  {
+    "id": "AC-003",
+    "query": "Issue a supplier NCR against SteelWorks for lot SW-2026-0501 dimensional nonconformance",
+    "expected_agent": "action_agent",
+    "expected_tools": ["create_supplier_ncr"],
+    "ground_truth": {
+      "key_facts": [
+        "Supplier ID: SUP-MTL01",
+        "Must include specific lot number",
+        "Must specify the nonconformance (dimensional out of spec)",
+        "Must include disposition recommendation"
+      ]
+    }
+  },
+  {
+    "id": "AC-004",
+    "query": "Create a PDCA record for the weld parameter change we evaluated",
+    "expected_agent": "action_agent",
+    "expected_tools": ["create_pdca_record"],
+    "ground_truth": {
+      "key_facts": [
+        "Must include all 4 PDCA sections",
+        "CHECK section must include quantified before/after metrics",
+        "ACT section must have a clear decision: standardize, modify, or revert"
+      ]
+    }
+  },
+  {
+    "id": "AC-005",
+    "query": "Schedule preventive maintenance for the curing oven next week",
+    "expected_agent": "action_agent",
+    "expected_tools": ["schedule_maintenance"],
+    "ground_truth": {
+      "key_facts": [
+        "Machine should be PNT-03-CLR-OVN01",
+        "Type should be preventive",
+        "Should reference maintenance schedule from equipment manual"
+      ]
+    }
+  },
+  {
+    "id": "AC-006",
+    "query": "Write an incident report for the paint booth temperature excursion that caused orange peel defects",
+    "expected_agent": "action_agent",
+    "expected_tools": ["create_incident_report", "search_past_issues"],
+    "ground_truth": {
+      "key_facts": [
+        "Should reference ISSUE-2025-002",
+        "Root cause: HVAC chiller compressor failure",
+        "Should include cost impact ($18,600 rework)",
+        "Preventive actions: temperature alarm on HMI, auto-pause production"
+      ]
+    }
+  }
+]

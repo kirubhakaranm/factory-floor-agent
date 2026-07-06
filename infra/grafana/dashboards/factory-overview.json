@@ -1,0 +1,48 @@
+{
+  "dashboard": {
+    "title": "PrimeEV Factory Overview",
+    "tags": ["primeev", "factory"],
+    "panels": [
+      {
+        "title": "OEE by Station (Last 24h)",
+        "type": "barchart",
+        "datasource": "ClickHouse",
+        "targets": [
+          {
+            "rawSql": "SELECT station_id, avg(oee) as avg_oee FROM primeev_telemetry.oee_metrics WHERE timestamp >= now() - INTERVAL 1 DAY GROUP BY station_id ORDER BY station_id"
+          }
+        ]
+      },
+      {
+        "title": "Sensor Temperature Heatmap",
+        "type": "heatmap",
+        "datasource": "ClickHouse",
+        "targets": [
+          {
+            "rawSql": "SELECT toStartOfHour(timestamp) as time, station_id, avg(value) as avg_temp FROM primeev_telemetry.sensor_readings WHERE sensor_type = 'TMP' AND timestamp >= now() - INTERVAL 24 HOUR GROUP BY time, station_id ORDER BY time"
+          }
+        ]
+      },
+      {
+        "title": "Active Alerts",
+        "type": "stat",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum(increase(agent_tool_calls_total{tool_name='get_active_alerts'}[1h]))"
+          }
+        ]
+      },
+      {
+        "title": "Daily Production Output",
+        "type": "timeseries",
+        "datasource": "ClickHouse",
+        "targets": [
+          {
+            "rawSql": "SELECT toDate(timestamp) as date, sum(oee) as daily_oee FROM primeev_telemetry.oee_metrics GROUP BY date ORDER BY date"
+          }
+        ]
+      }
+    ]
+  }
+}

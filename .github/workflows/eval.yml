@@ -1,0 +1,40 @@
+name: Agent Evaluation
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install ".[dev]"
+
+      # Run eval framework tests (offline — no LLM calls)
+      - name: Run eval framework tests
+        run: pytest evals/ -v --tb=short
+
+      # For live evals (uncomment when ready):
+      # - name: Run live agent evals
+      #   env:
+      #     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      #   run: pytest evals/ -v --live --tb=short
+
+      # Post results as PR comment (uncomment when ready):
+      # - name: Post eval results
+      #   if: always()
+      #   uses: actions/github-script@v7
+      #   with:
+      #     script: |
+      #       const fs = require('fs');
+      #       const report = fs.readFileSync('eval_report.md', 'utf8');
+      #       github.rest.issues.createComment({
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         issue_number: context.issue.number,
+      #         body: report,
+      #       });

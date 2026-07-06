@@ -1,0 +1,106 @@
+[
+  {
+    "id": "PR-001",
+    "query": "What's our OEE for the Assembly stage this week?",
+    "expected_agent": "production_agent",
+    "expected_tools": ["get_oee_metrics"],
+    "ground_truth": {
+      "key_facts": [
+        "Must break OEE into Availability, Performance, Quality components",
+        "Should compare to 75% target",
+        "Should identify which component is weakest"
+      ]
+    }
+  },
+  {
+    "id": "PR-002",
+    "query": "Compare Day shift vs Night shift OEE for this month",
+    "expected_agent": "production_agent",
+    "expected_tools": ["compare_shifts"],
+    "ground_truth": {
+      "key_facts": [
+        "Should show per-shift OEE averages",
+        "Night shift typically has slightly lower performance",
+        "Should note statistical significance of difference"
+      ]
+    }
+  },
+  {
+    "id": "PR-003",
+    "query": "How many vehicles did we produce today? Are we on target?",
+    "expected_agent": "production_agent",
+    "expected_tools": ["get_throughput"],
+    "ground_truth": {
+      "key_facts": [
+        "Daily target is 80 vehicles (SD100: 30, SV200: 25, CP300: 25)",
+        "Should report actual vs target by model",
+        "Should report overall completion percentage"
+      ]
+    }
+  },
+  {
+    "id": "PR-004",
+    "query": "Trace the production history of VIN PEF-SD100-26-004521",
+    "expected_agent": "production_agent",
+    "expected_tools": ["trace_vin_history", "get_vin_quality_summary"],
+    "ground_truth": {
+      "key_facts": [
+        "Should show station-by-station pass/fail results",
+        "Should include rework events if any",
+        "Should report rolled throughput yield for this unit"
+      ]
+    }
+  },
+  {
+    "id": "PR-005",
+    "query": "What components do we need for PE-SV200? Who supplies them?",
+    "expected_agent": "production_agent",
+    "expected_tools": ["get_bom_for_model"],
+    "ground_truth": {
+      "key_facts": [
+        "Should return full BOM for PE-SV200 (SUV)",
+        "Each component should include part_number, description, supplier, station, cost",
+        "SUV-specific components like 100kWh battery pack and panoramic roof reinforcement"
+      ]
+    }
+  },
+  {
+    "id": "PR-006",
+    "query": "We're planning to produce 50 PE-SD100 units tomorrow. Do we have enough materials?",
+    "expected_agent": "production_agent",
+    "expected_tools": ["check_mrp", "get_raw_material_stock"],
+    "ground_truth": {
+      "key_facts": [
+        "Should calculate material requirements for 50 SD100 units",
+        "Should check current inventory levels against requirements",
+        "Should flag any shortages or items below reorder point"
+      ]
+    }
+  },
+  {
+    "id": "PR-007",
+    "query": "What's the cycle time at Assembly Station 2? Is it the bottleneck?",
+    "expected_agent": "production_agent",
+    "expected_tools": ["get_cycle_times", "compare_stations"],
+    "ground_truth": {
+      "key_facts": [
+        "ASM-02-INT target cycle time is 240 seconds (longest in assembly)",
+        "Should compare actual vs target",
+        "Should compare across all assembly stations to identify bottleneck"
+      ]
+    }
+  },
+  {
+    "id": "PR-008",
+    "query": "Are any raw materials running low?",
+    "expected_agent": "production_agent",
+    "expected_tools": ["get_raw_material_stock"],
+    "ground_truth": {
+      "key_facts": [
+        "Should check all raw materials against reorder points",
+        "Items below reorder point should be flagged",
+        "Should include lead time information for procurement urgency"
+      ]
+    }
+  }
+]

@@ -1,0 +1,68 @@
+[
+  {
+    "id": "IM-001",
+    "query": "We changed the weld parameters on Station WLD-01-UBD last week. Did it improve quality?",
+    "expected_agent": "improvement_agent",
+    "expected_tools": ["get_cpk", "get_defect_rates", "compare_periods", "search_fmea_risks"],
+    "ground_truth": {
+      "key_facts": [
+        "Must compare metrics BEFORE vs AFTER the change",
+        "Key metrics: defect rate, Cpk for nugget diameter, rework rate",
+        "Should reference relevant FMEA item",
+        "Should recommend: STANDARDIZE, MODIFY, or REVERT based on data"
+      ]
+    }
+  },
+  {
+    "id": "IM-002",
+    "query": "We increased the PM frequency on Press 1 from 500 to 350 hours two months ago. Has reliability improved?",
+    "expected_agent": "improvement_agent",
+    "expected_tools": ["get_mtbf_mttr", "compare_periods"],
+    "ground_truth": {
+      "key_facts": [
+        "Should compare MTBF and MTTR before vs after the PM interval change",
+        "More frequent PM should increase MTBF and decrease MTTR",
+        "Should also check for side effects: cost impact, production time lost to PM"
+      ]
+    }
+  },
+  {
+    "id": "IM-003",
+    "query": "Our paint booth temperature control was upgraded 3 weeks ago. Did it reduce orange peel defects?",
+    "expected_agent": "improvement_agent",
+    "expected_tools": ["get_defect_rates", "get_rework_history", "compare_periods", "search_past_issues"],
+    "ground_truth": {
+      "key_facts": [
+        "Should compare orange peel defect rate before vs after",
+        "Reference ISSUE-2025-002 (paint booth temperature excursion)",
+        "Should check if rework rate at PNT stations decreased"
+      ]
+    }
+  },
+  {
+    "id": "IM-004",
+    "query": "What past case studies do we have on paint quality improvements?",
+    "expected_agent": "improvement_agent",
+    "expected_tools": ["search_case_study", "search_past_issues"],
+    "ground_truth": {
+      "key_facts": [
+        "Should find the 5-Why analysis on paint adhesion failure",
+        "Should find ISSUE-2025-002 on orange peel temperature excursion",
+        "Should summarize findings and lessons learned"
+      ]
+    }
+  },
+  {
+    "id": "IM-005",
+    "query": "Has overall OEE improved this quarter compared to last?",
+    "expected_agent": "improvement_agent",
+    "expected_tools": ["get_oee_metrics", "compare_periods"],
+    "ground_truth": {
+      "key_facts": [
+        "Should compare Q1 vs Q2 OEE across all stations",
+        "Should break down which component (A/P/Q) improved or declined",
+        "Should identify which stages contributed most to change"
+      ]
+    }
+  }
+]

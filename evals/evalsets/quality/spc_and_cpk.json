@@ -1,0 +1,93 @@
+[
+  {
+    "id": "QA-001",
+    "query": "What's the Cpk trend for panel thickness at Station STP-01-PRS?",
+    "expected_agent": "quality_agent",
+    "expected_tools": ["get_cpk", "get_process_capability"],
+    "ground_truth": {
+      "key_facts": [
+        "Should return daily Cpk values over time",
+        "Cpk >= 1.33 is capable, 1.0-1.33 is marginal, < 1.0 is not capable",
+        "Should identify trend direction and flag if declining"
+      ]
+    }
+  },
+  {
+    "id": "QA-002",
+    "query": "Are there any SPC out-of-control signals on the welding station?",
+    "expected_agent": "quality_agent",
+    "expected_tools": ["check_control_rules", "get_spc_data"],
+    "ground_truth": {
+      "key_facts": [
+        "Should check Western Electric rules: point beyond 3-sigma, 9 consecutive same side, 6 trending",
+        "Should report specific rule violations with data point references",
+        "Status should be IN CONTROL or OUT OF CONTROL"
+      ]
+    }
+  },
+  {
+    "id": "QA-003",
+    "query": "Should we reject Lot 4502 based on the AQL sampling results?",
+    "expected_agent": "quality_agent",
+    "expected_tools": ["get_sampling_results", "search_specification"],
+    "ground_truth": {
+      "key_facts": [
+        "Must reference the specific AQL level, sample size, accept number, and defects found",
+        "If defects > accept number, recommend rejection",
+        "Should mention option for tightened inspection or 100% screening"
+      ]
+    }
+  },
+  {
+    "id": "QA-004",
+    "query": "What's our defect rate at the Paint station this week?",
+    "expected_agent": "quality_agent",
+    "expected_tools": ["get_defect_rates", "get_dimensional_results"],
+    "ground_truth": {
+      "key_facts": [
+        "Should report pass/fail counts and defect rate percentage",
+        "Should break down by defect type if possible",
+        "Should compare to FPY target for paint stations"
+      ]
+    }
+  },
+  {
+    "id": "QA-005",
+    "query": "How many reworks happened at Assembly this month? What's the cost?",
+    "expected_agent": "quality_agent",
+    "expected_tools": ["get_rework_history"],
+    "ground_truth": {
+      "key_facts": [
+        "Should report total rework count, total rework time, total cost",
+        "Should break down by station (ASM-01, ASM-02, ASM-03)",
+        "Should identify top defect types causing rework"
+      ]
+    }
+  },
+  {
+    "id": "QA-006",
+    "query": "Supplier SteelWorks quality has been declining. Show me the data.",
+    "expected_agent": "quality_agent",
+    "expected_tools": ["get_supplier_scorecard", "get_receiving_inspections", "get_supplier_ncrs"],
+    "ground_truth": {
+      "key_facts": [
+        "Should show monthly defect PPM trend for SUP-MTL01",
+        "Should show receiving inspection pass/fail/conditional rates",
+        "Should list any NCRs issued against this supplier"
+      ]
+    }
+  },
+  {
+    "id": "QA-007",
+    "query": "What does the PFMEA say about panel cracking risk in Stamping?",
+    "expected_agent": "quality_agent",
+    "expected_tools": ["search_fmea_risks"],
+    "ground_truth": {
+      "key_facts": [
+        "Should reference PFMEA-STP item STP-002",
+        "Severity 8, potential causes: die wear, insufficient lubrication, material hardness",
+        "Should report current RPN and recommended actions"
+      ]
+    }
+  }
+]

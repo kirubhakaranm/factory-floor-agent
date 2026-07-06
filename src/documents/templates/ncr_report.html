@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="doc-title">Supplier Non-Conformance Report (NCR)</div>
+<div class="doc-subtitle">{{ meta.title }}</div>
+
+<div class="section">
+  <div class="section-title">Supplier Information</div>
+  <div class="field"><span class="field-label">Supplier ID:</span> <span class="field-value">{{ doc.supplier_id }}</span></div>
+  <div class="field"><span class="field-label">Supplier Name:</span> <span class="field-value">{{ doc.supplier_name }}</span></div>
+  <div class="field"><span class="field-label">Lot ID:</span> <span class="field-value">{{ doc.lot_id }}</span></div>
+  <div class="field"><span class="field-label">Material:</span> <span class="field-value">{{ doc.material_description }}</span></div>
+  <div class="field"><span class="field-label">Quantity Affected:</span> <span class="field-value">{{ doc.quantity_affected }} units</span></div>
+</div>
+
+<div class="section">
+  <div class="section-title">Non-Conformance Description</div>
+  <div class="danger-box">{{ doc.nonconformance }}</div>
+</div>
+
+{% if doc.quality_impact %}
+<div class="section">
+  <div class="section-title">Quality Impact</div>
+  <p>{{ doc.quality_impact }}</p>
+</div>
+{% endif %}
+
+<div class="section">
+  <div class="section-title">Disposition</div>
+  <table>
+    <tr><th>Disposition</th><th>Details</th></tr>
+    <tr>
+      <td><strong>{{ doc.disposition|upper }}</strong></td>
+      <td>
+        {% if doc.disposition == 'return' %}Material to be returned to supplier for credit/replacement
+        {% elif doc.disposition == 'rework' %}Material to be reworked at PrimeEV facility
+        {% elif doc.disposition == 'scrap' %}Material to be scrapped — cost charged to supplier
+        {% elif doc.disposition == 'use-as-is' %}MRB approval required — material accepted with deviation
+        {% endif %}
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">Supplier Response Required</div>
+  <div class="highlight-box">
+    Supplier must provide corrective action response within <strong>{{ doc.supplier_response_due }}</strong>.<br>
+    Response must include: root cause analysis, corrective actions, preventive actions, and timeline.
+  </div>
+</div>
+
+{% if doc.receiving_inspection_ref %}
+<div class="section">
+  <div class="field"><span class="field-label">Receiving Inspection Ref:</span> <span class="field-value">{{ doc.receiving_inspection_ref }}</span></div>
+</div>
+{% endif %}
+
+<div class="approval-block">
+  <div class="section-title">Approvals</div>
+  <div style="margin-top: 20px;">
+    <div class="approval-line"></div> <div class="approval-line"></div><br>
+    <span style="font-size: 8pt; color: #64748b;">Supplier Quality Engineer — Date &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Quality Manager — Date</span>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{
+  "dashboard": {
+    "title": "PrimeEV Agent Performance",
+    "tags": ["primeev", "agent"],
+    "panels": [
+      {
+        "title": "Agent Request Duration (p95)",
+        "type": "timeseries",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(agent_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{agent_name}}"
+          }
+        ]
+      },
+      {
+        "title": "Tool Calls per Minute",
+        "type": "timeseries",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "rate(agent_tool_calls_total[5m]) * 60",
+            "legendFormat": "{{tool_name}}"
+          }
+        ]
+      },
+      {
+        "title": "Agent Errors",
+        "type": "stat",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum(increase(agent_errors_total[1h]))"
+          }
+        ]
+      },
+      {
+        "title": "Requests by Agent",
+        "type": "piechart",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum by(agent_name) (increase(agent_requests_total[24h]))",
+            "legendFormat": "{{agent_name}}"
+          }
+        ]
+      }
+    ]
+  }
+}

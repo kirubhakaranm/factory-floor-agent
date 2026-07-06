@@ -1,0 +1,53 @@
+[
+  {
+    "id": "EQ-007",
+    "query": "Which machines are at risk of failure in the next 48 hours?",
+    "expected_agent": "equipment_agent",
+    "expected_tools": ["get_degradation_status", "get_failure_rate_trend"],
+    "ground_truth": {
+      "key_facts": [
+        "Should check degradation state for all machines with low health index",
+        "Machines with RUL < 48 hours should be flagged",
+        "Should prioritize by criticality rating (A machines first)"
+      ]
+    }
+  },
+  {
+    "id": "EQ-008",
+    "query": "Press 1 MTTR has been increasing. Why are repairs taking longer?",
+    "expected_agent": "equipment_agent",
+    "expected_tools": ["get_mtbf_mttr", "get_maintenance_history", "get_spare_parts"],
+    "ground_truth": {
+      "key_facts": [
+        "Should analyze recent repair records for duration breakdown",
+        "Common causes: spare parts unavailability, technician skill gap, equipment access issues",
+        "Should check if spare parts are in stock (reference ISSUE-2025-003 spare parts stockout)"
+      ]
+    }
+  },
+  {
+    "id": "EQ-009",
+    "query": "Do we have spare hydraulic pumps in stock for Press 1?",
+    "expected_agent": "equipment_agent",
+    "expected_tools": ["get_spare_parts"],
+    "ground_truth": {
+      "key_facts": [
+        "Should query spare parts inventory filtered by compatible machine STP-01-PRS-HYP01",
+        "Part number SP-HYP-001 is the hydraulic pump cartridge",
+        "Should report quantity on hand, reorder point, and lead time"
+      ]
+    }
+  },
+  {
+    "id": "EQ-010",
+    "query": "Are there any active equipment alerts right now?",
+    "expected_agent": "equipment_agent",
+    "expected_tools": ["get_active_alerts"],
+    "ground_truth": {
+      "key_facts": [
+        "Should return list of current alerts with severity, machine, and description",
+        "Critical alerts should be highlighted first"
+      ]
+    }
+  }
+]
