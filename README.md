@@ -1,6 +1,6 @@
 # PrimeEV Motors — Factory Floor AI Agent
 
-Production-grade multi-agent AI system that helps manufacturing engineers **diagnose, decide, and act** on an electric vehicle (EV) assembly factory floor.
+Multi-agent AI system that helps manufacturing engineers **diagnose, decide, and act** on an electric vehicle (EV) assembly factory floor.
 
 Built with **Google ADK (Agent Development Kit)** · **Claude Haiku 4.5** (Anthropic) · **PostgreSQL** · **ClickHouse** · **Kafka** · **React** · **Prometheus/Grafana**
 
@@ -8,7 +8,7 @@ Built with **Google ADK (Agent Development Kit)** · **Claude Haiku 4.5** (Anthr
 
 ## Demo
 
-https://github.com/user-attachments/assets/factory_agent_video.mp4
+https://github.com/user-attachments/assets/21bc6cf0-a9b0-4afc-8b69-93107fa1188e
 
 ---
 
