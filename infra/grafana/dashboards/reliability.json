@@ -1,0 +1,187 @@
+{
+  "uid": "primeev-reliability",
+    "title": "PrimeEV — Equipment Reliability",
+    "tags": ["primeev", "reliability"],
+    "schemaVersion": 36,
+    "version": 1,
+    "refresh": "5m",
+    "time": { "from": "now-200d", "to": "now" },
+    "panels": [
+      {
+        "id": 1,
+        "title": "MTBF by Machine — Last 30 Days (hours)",
+        "type": "barchart",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 0, "y": 0, "w": 12, "h": 10 },
+        "targets": [
+          {
+            "rawSql": "SELECT machine_id, round(avg(mtbf_hrs), 1) AS avg_mtbf FROM primeev_telemetry.machine_reliability_metrics WHERE period = 'monthly' AND $__timeFilter(period_start) GROUP BY machine_id ORDER BY avg_mtbf ASC LIMIT 15",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "h",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 200, "color": "yellow" },
+                { "value": 400, "color": "green" }
+              ]
+            },
+            "custom": { "fillOpacity": 70 }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "MTTR by Machine — Last 30 Days (hours)",
+        "type": "barchart",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 12, "y": 0, "w": 12, "h": 10 },
+        "targets": [
+          {
+            "rawSql": "SELECT machine_id, round(avg(mttr_hrs), 2) AS avg_mttr FROM primeev_telemetry.machine_reliability_metrics WHERE period = 'monthly' AND $__timeFilter(period_start) GROUP BY machine_id ORDER BY avg_mttr DESC LIMIT 15",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "h",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 2, "color": "yellow" },
+                { "value": 4, "color": "red" }
+              ]
+            },
+            "custom": { "fillOpacity": 70 }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Fleet Availability % (last 30 d)",
+        "type": "gauge",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 0, "y": 10, "w": 4, "h": 5 },
+        "targets": [
+          {
+            "rawSql": "SELECT round(avg(availability_pct), 2) AS fleet_avail FROM primeev_telemetry.machine_reliability_metrics WHERE period = 'monthly' AND $__timeFilter(period_start)",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 90, "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 90, "color": "red" },
+                { "value": 95, "color": "yellow" },
+                { "value": 98, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Total Failures (last 30 d)",
+        "type": "stat",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 4, "y": 10, "w": 4, "h": 5 },
+        "targets": [
+          {
+            "rawSql": "SELECT sum(num_failures) AS total FROM primeev_telemetry.machine_reliability_metrics WHERE period = 'monthly' AND $__timeFilter(period_start)",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 20, "color": "yellow" },
+                { "value": 50, "color": "red" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Total Repair Cost (last 30 d)",
+        "type": "stat",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 8, "y": 10, "w": 4, "h": 5 },
+        "targets": [
+          {
+            "rawSql": "SELECT round(sum(total_repair_cost), 0) AS cost FROM primeev_telemetry.machine_reliability_metrics WHERE period = 'monthly' AND $__timeFilter(period_start)",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": { "defaults": { "unit": "currencyUSD" } }
+      },
+      {
+        "id": 6,
+        "title": "Availability % per Machine (last 30 d)",
+        "type": "table",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 12, "y": 10, "w": 12, "h": 10 },
+        "targets": [
+          {
+            "rawSql": "SELECT machine_id, round(avg(mtbf_hrs), 1) AS avg_mtbf, round(avg(mttr_hrs), 2) AS avg_mttr, round(avg(availability_pct), 2) AS avail_pct, sum(num_failures) AS failures FROM primeev_telemetry.machine_reliability_metrics WHERE period = 'monthly' AND $__timeFilter(period_start) GROUP BY machine_id ORDER BY avail_pct ASC",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": {
+          "overrides": [
+            {
+              "matcher": { "id": "byName", "options": "avail_pct" },
+              "properties": [
+                { "id": "unit", "value": "percent" },
+                { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "value": 0, "color": "red" }, { "value": 95, "color": "yellow" }, { "value": 98, "color": "green" }] } },
+                { "id": "custom.displayMode", "value": "color-background" }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": 7,
+        "title": "MTBF Trend — Top 5 Machines",
+        "type": "timeseries",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 0, "y": 15, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "rawSql": "SELECT period_start AS time, machine_id, round(mtbf_hrs, 1) AS mtbf FROM primeev_telemetry.machine_reliability_metrics WHERE period = 'monthly' AND machine_id IN (SELECT machine_id FROM primeev_telemetry.machine_reliability_metrics WHERE period = 'monthly' GROUP BY machine_id ORDER BY sum(num_failures) DESC LIMIT 5) ORDER BY time",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": { "defaults": { "unit": "h", "custom": { "lineWidth": 2 } } },
+        "transformations": [{ "id": "prepareTimeSeries", "options": { "format": "multi" } }]
+      },
+      {
+        "id": 8,
+        "title": "Failure Count by Machine (monthly)",
+        "type": "timeseries",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 12, "y": 15, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "rawSql": "SELECT period_start AS time, machine_id, num_failures FROM primeev_telemetry.machine_reliability_metrics WHERE period = 'monthly' AND machine_id IN (SELECT machine_id FROM primeev_telemetry.machine_reliability_metrics WHERE period = 'monthly' GROUP BY machine_id ORDER BY sum(num_failures) DESC LIMIT 8) ORDER BY time",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 1, "fillOpacity": 10 } } },
+        "transformations": [{ "id": "prepareTimeSeries", "options": { "format": "multi" } }]
+      }
+    ]
+}

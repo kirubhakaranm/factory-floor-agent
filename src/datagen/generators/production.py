@@ -18,13 +18,15 @@ from src.datagen.generators.base import BaseGenerator
 class ProductionGenerator(BaseGenerator):
     """Generates VINs, production_batches, production_orders, and oee_metrics."""
 
-    def __init__(self, days: int = 180, seed: int = 42, start_date: datetime | None = None):
+    def __init__(self, days: int = 180, seed: int = 42, start_date: datetime | None = None) -> None:
+        """Initialize production generator with per-model VIN and batch sequence counters."""
         super().__init__(days, seed, start_date)
         self._vin_seq: dict[str, int] = {m: 0 for m in ALL_MODEL_IDS}
         self._batch_seq = 0
         self._po_seq = 0
 
     def generate(self) -> dict[str, list[dict[str, Any]]]:
+        """Generate vin_registry, production_batches, production_orders, and oee_metrics."""
         vins: list[dict[str, Any]] = []
         batches: list[dict[str, Any]] = []
         orders: list[dict[str, Any]] = []
@@ -57,6 +59,7 @@ class ProductionGenerator(BaseGenerator):
     def _generate_day(
         self, date: datetime
     ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+        """Generate VINs, batches, and production orders for all models on a single day."""
         vins = []
         batches = []
         orders = []
@@ -128,6 +131,7 @@ class ProductionGenerator(BaseGenerator):
         return vins, batches, orders
 
     def _generate_oee(self, station_id: str, ts: datetime, shift_name: str) -> dict[str, Any]:
+        """Generate one OEE metrics row for a station and shift timestamp."""
         station = FACTORY_STATIONS[station_id]
 
         # Availability: 88-99% (some downtime)

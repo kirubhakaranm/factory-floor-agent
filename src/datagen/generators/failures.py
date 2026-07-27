@@ -28,12 +28,14 @@ class FailureGenerator(BaseGenerator):
     - RNF: 0.1% random chance
     """
 
-    def __init__(self, days: int = 180, seed: int = 42, start_date: datetime | None = None):
+    def __init__(self, days: int = 180, seed: int = 42, start_date: datetime | None = None) -> None:
+        """Initialize failure generator with sequence counters for IDs."""
         super().__init__(days, seed, start_date)
         self._failure_seq: dict[str, int] = {}
         self._wo_seq = 0
 
     def generate(self) -> dict[str, list[dict[str, Any]]]:
+        """Generate equipment_failures, maintenance_history, work_orders, and reliability metrics."""
         failures: list[dict[str, Any]] = []
         maintenance: list[dict[str, Any]] = []
         work_orders: list[dict[str, Any]] = []
@@ -56,20 +58,22 @@ class FailureGenerator(BaseGenerator):
     def _generate_machine_failures(
         self, machine: MachineSpec
     ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+        """Generate failure events, maintenance records, and work orders for a single machine."""
         failures = []
         maintenance = []
         work_orders = []
 
         # Failure rate depends on criticality and machine type
+        # Targets: ~1-3 failures/machine/month for high-use types, fewer for TST/CNV
         base_rate_per_day = {
-            "HYP": 0.015, "SRV": 0.010, "RBT": 0.008, "OVN": 0.012,
-            "PMP": 0.018, "TST": 0.005, "CNC": 0.013, "CNV": 0.004,
+            "HYP": 0.050, "SRV": 0.035, "RBT": 0.030, "OVN": 0.040,
+            "PMP": 0.055, "TST": 0.015, "CNC": 0.040, "CNV": 0.012,
         }
-        rate = base_rate_per_day.get(machine.machine_type, 0.01)
+        rate = base_rate_per_day.get(machine.machine_type, 0.025)
         if machine.criticality == "A":
-            rate *= 0.8  # better maintained
+            rate *= 0.6  # better maintained — fewer failures
         elif machine.criticality == "C":
-            rate *= 1.3
+            rate *= 1.4
 
         # Generate preventive maintenance events
         pm_interval_days = machine.maintenance_interval_hrs / 24
@@ -195,6 +199,7 @@ class FailureGenerator(BaseGenerator):
         return failures, maintenance, work_orders
 
     def _get_severity(self, failure_mode: str) -> str:
+        """Sample a severity level (critical/major/minor) weighted by failure mode."""
         weights = {
             "TWF": [0.1, 0.6, 0.3],
             "HDF": [0.3, 0.5, 0.2],
@@ -205,11 +210,13 @@ class FailureGenerator(BaseGenerator):
         return self.rng.choice(FAILURE_SEVERITIES, p=weights.get(failure_mode, [0.3, 0.4, 0.3]))
 
     def _get_downtime(self, severity: str) -> float:
+        """Return a random downtime duration in minutes for the given severity level."""
         ranges = {"critical": (120, 480), "major": (30, 180), "minor": (10, 60)}
         lo, hi = ranges.get(severity, (30, 120))
         return float(self.rng.integers(lo, hi + 1))
 
     def _get_failed_component(self, machine_type: str, failure_mode: str) -> str:
+        """Return a randomly selected failed component name for the machine type."""
         components = {
             "HYP": ["hydraulic pump", "pressure relief valve", "cylinder seal", "solenoid valve"],
             "SRV": ["servo motor", "encoder", "ball screw", "brake module"],
@@ -224,6 +231,7 @@ class FailureGenerator(BaseGenerator):
         return self.rng.choice(options)
 
     def _get_root_cause(self, failure_mode: str, component: str) -> str:
+        """Return a human-readable root cause description for the failure mode and component."""
         causes = {
             "TWF": f"Excessive wear on {component} exceeded service life threshold",
             "HDF": f"Insufficient heat dissipation caused thermal damage to {component}",
@@ -234,6 +242,7 @@ class FailureGenerator(BaseGenerator):
         return causes.get(failure_mode, f"Unknown failure of {component}")
 
     def _random_parts(self, machine_type: str) -> list[str]:
+        """Return a random subset of consumable parts replaced during a PM event."""
         consumables = {
             "HYP": ["hydraulic filter", "O-ring set", "hydraulic fluid 20L"],
             "SRV": ["brake pad", "lubricant cartridge", "belt"],

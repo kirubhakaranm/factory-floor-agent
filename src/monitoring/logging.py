@@ -33,4 +33,5 @@ def setup_logging(log_level: str = "INFO") -> None:
 
 
 def get_logger(name: str) -> structlog.stdlib.BoundLogger:
+    """Return a named structlog bound logger for use throughout the application."""
     return structlog.get_logger(name)

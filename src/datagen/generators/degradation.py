@@ -23,11 +23,13 @@ class DegradationGenerator(BaseGenerator):
         seed: int = 42,
         start_date: datetime | None = None,
         sample_interval_hours: int = 1,
-    ):
+    ) -> None:
+        """Initialize with hourly sampling interval for degradation curves."""
         super().__init__(days, seed, start_date)
         self.sample_interval_hours = sample_interval_hours
 
     def generate(self) -> dict[str, list[dict[str, Any]]]:
+        """Generate degradation_state rows for every machine component in the factory."""
         rows: list[dict[str, Any]] = []
 
         for machine_id, machine in FACTORY_MACHINES.items():
@@ -39,6 +41,7 @@ class DegradationGenerator(BaseGenerator):
         return {"degradation_state": rows}
 
     def _get_degradation_components(self, machine_type: str) -> list[str]:
+        """Return the list of trackable components for a given machine type."""
         components_by_type = {
             "HYP": ["hydraulic_pump", "seals", "hydraulic_fluid"],
             "SRV": ["servo_motor", "ball_screw", "encoder"],
@@ -54,16 +57,17 @@ class DegradationGenerator(BaseGenerator):
     def _generate_degradation_curve(
         self, machine: MachineSpec, component: str
     ) -> list[dict[str, Any]]:
+        """Generate a piecewise health-index and RUL time series for a single machine component."""
         total_hours = self.days * 24
         n_samples = total_hours // self.sample_interval_hours
 
         # Randomized degradation parameters (C-MAPSS-inspired)
-        # Healthy period: 40-80% of total time
-        healthy_fraction = self.rng.uniform(0.4, 0.8)
+        # Healthy period: 85-99% of total time — only tail-end unlucky components fail
+        healthy_fraction = self.rng.uniform(0.85, 0.99)
         healthy_end = int(n_samples * healthy_fraction)
 
-        # Degradation rate (exponential decay constant)
-        decay_rate = self.rng.uniform(0.005, 0.03)
+        # Decay rate calibrated so only bottom ~10% of draws reach RUL=0 in 90 days
+        decay_rate = self.rng.uniform(0.0005, 0.005)
 
         # Generate health index (1.0 = perfect, 0.0 = failed)
         health = np.ones(n_samples)
@@ -84,16 +88,32 @@ class DegradationGenerator(BaseGenerator):
 
         # Calculate RUL (hours until health drops below 0.2 threshold)
         failure_threshold = 0.2
-        failure_idx = n_samples  # default: doesn't fail in window
+        failure_idx = None
         for i in range(n_samples):
             if health[i] < failure_threshold:
                 failure_idx = i
                 break
 
+        # If component never fails in window, extrapolate: solve exp(-k*t)=0.2 for t
+        # RUL at end = t_to_failure - time_already_in_decay
+        if failure_idx is None:
+            last_hi = float(health[-1])
+            if last_hi > failure_threshold and decay_rate > 0:
+                t_to_fail_from_end = np.log(last_hi / failure_threshold) / decay_rate
+                extrapolated_rul_end = t_to_fail_from_end * self.sample_interval_hours
+            else:
+                extrapolated_rul_end = 0.0
+            failure_idx = n_samples  # sentinel for RUL calc below
+
         rows: list[dict[str, Any]] = []
         for i in range(n_samples):
             ts = self.start_date + timedelta(hours=i * self.sample_interval_hours)
-            rul = max(0.0, (failure_idx - i) * self.sample_interval_hours)
+            if failure_idx < n_samples:
+                rul = max(0.0, (failure_idx - i) * self.sample_interval_hours)
+            else:
+                # Extrapolated: RUL decreases linearly from extrapolated end value
+                steps_from_end = n_samples - 1 - i
+                rul = max(0.0, extrapolated_rul_end + steps_from_end * self.sample_interval_hours)
 
             rows.append({
                 "timestamp": ts,

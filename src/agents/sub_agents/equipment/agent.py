@@ -1,8 +1,8 @@
-﻿"""Equipment Agent â€” diagnose failures, predict degradation, recommend maintenance."""
+﻿"""Equipment Agent — diagnose failures, predict degradation, recommend maintenance."""
 
 from google.adk.agents import Agent
-from google.adk.models.lite_llm import LiteLlm
 
+from src.agents.model import get_agent_model
 from src.agents.prompts.equipment import EQUIPMENT_SYSTEM_PROMPT
 from src.agents.tools.energy_tools import get_energy_consumption, get_energy_trend
 from src.agents.tools.failure_tools import (
@@ -35,9 +35,9 @@ from src.agents.tools.sensor_tools import (
 
 equipment_agent = Agent(
     name="equipment_agent",
-    model=LiteLlm(model="anthropic/claude-sonnet-5"),
+    model=get_agent_model(),
     description=(
-        "Equipment specialist â€” handles machine failures, sensor diagnostics, "
+        "Equipment specialist — handles machine failures, sensor diagnostics, "
         "predictive maintenance, MTBF/MTTR analysis, energy monitoring, and spare parts. "
         "Route here for any question about machines, sensors, maintenance, or equipment health."
     ),
@@ -64,3 +64,4 @@ equipment_agent = Agent(
         search_past_issues,
     ],
 )
+

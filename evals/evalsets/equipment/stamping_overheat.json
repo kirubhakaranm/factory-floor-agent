@@ -1,84 +1,343 @@
 [
   {
     "id": "EQ-001",
-    "query": "Press 1 hydraulic oil temperature is reading 72°C. Is this a problem?",
+    "query": "Press 1 hydraulic oil temperature is reading 72\u00b0C right now. Is this a problem? What does the sensor show in the last 2 hours?",
     "expected_agent": "equipment_agent",
-    "expected_tools": ["get_current_readings", "get_sensor_trend", "search_sop"],
+    "expected_tools": [
+      "get_current_readings",
+      "get_sensor_trend",
+      "search_sop"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_current_readings",
+        "required_args": {
+          "station_id": "STP-01-PRS"
+        }
+      },
+      {
+        "tool": "get_sensor_trend",
+        "required_args": {
+          "machine_id": "STP-01-PRS-HYP01"
+        }
+      },
+      {
+        "tool": "search_sop",
+        "required_args": {}
+      }
+    ],
+    "expected_args": {
+      "get_current_readings": {
+        "station_id": "STP-01-PRS"
+      },
+      "get_sensor_trend": {
+        "machine_id": "STP-01-PRS-HYP01"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "72°C exceeds the max normal operating range of 65°C for hydraulic presses",
-        "Normal operating range is 35-65°C",
-        "This indicates potential cooler fan failure, high ambient temperature, or excessive cycling"
-      ],
-      "expected_recommendation": "Reduce cycle rate, check cooler fans, verify coolant flow",
-      "severity": "major"
+      "key_facts": {
+        "domain": [
+          "72\u00c2\u00b0C exceeds the max normal operating range of 65\u00c2\u00b0C for hydraulic presses",
+          "Normal operating range is 35-65\u00c2\u00b0C",
+          "This indicates potential cooler fan failure, high ambient temperature, or excessive cycling"
+        ],
+        "data": [
+          "Latest hydraulic oil temperature at STP-01-PRS-HYP01 is 41.8\u00b0\u00b0C",
+          "Temperature status: within normal range (35\u201365\u00b0C)",
+          "Normal operating range is 35\u201365\u00b0C for hydraulic presses"
+        ]
+      },
+      "expected_recommendation": "Reduce cycle rate, check cooler fans, verify coolant flow"
     }
   },
   {
     "id": "EQ-002",
-    "query": "Why does Press 1 keep breaking down? It's had 3 failures this month.",
+    "query": "Can you pull the reliability report for Press 1 hydraulic press this month? I want to see MTBF, MTTR, and availability.",
     "expected_agent": "equipment_agent",
-    "expected_tools": ["get_failure_history", "get_mtbf_mttr", "search_past_issues", "get_spare_parts"],
+    "expected_tools": [
+      "get_reliability_report",
+      "get_mtbf_mttr"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_reliability_report",
+        "required_args": {
+          "machine_id": "STP-01-PRS-HYP01"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_reliability_report": {
+        "station_id": "STP-01-PRS"
+      },
+      "get_mtbf_mttr": {
+        "machine_id": "STP-01-PRS-HYP01"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "MTBF has dropped significantly indicating accelerating degradation",
-        "Should check for pattern in failure modes — repeat failures suggest systemic root cause",
-        "Reference ISSUE-2025-003 which documented similar repeated pump failures due to oil contamination"
-      ],
-      "expected_recommendation": "Check hydraulic oil particle count, review filter maintenance schedule, stock spare pumps"
+      "key_facts": {
+        "domain": [
+          "Should report MTBF, MTTR, and availability percentage for STP-01-PRS-HYP01",
+          "Should note number of failures in the current period",
+          "Should compare availability against 95% uptime target"
+        ],
+        "data": [
+          "STP-01-PRS-HYP01 current MTBF: 360.0 hours",
+          "STP-01-PRS-HYP01 current MTTR: 1.3 hours",
+          "Machine availability: 99.6%",
+          "Failures this month: 2"
+        ]
+      }
     }
   },
   {
     "id": "EQ-003",
-    "query": "What's the remaining useful life on the hydraulic pump for Press 1?",
+    "query": "What's the current remaining useful life on the hydraulic pump for Press 1 as of today?",
     "expected_agent": "equipment_agent",
-    "expected_tools": ["get_degradation_status", "get_maintenance_history"],
+    "expected_tools": [
+      "get_degradation_status",
+      "get_maintenance_history"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_degradation_status",
+        "required_args": {
+          "machine_id": "STP-01-PRS-HYP01"
+        }
+      },
+      {
+        "tool": "get_maintenance_history",
+        "required_args": {
+          "machine_id": "STP-01-PRS-HYP01"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_degradation_status": {
+        "machine_id": "STP-01-PRS-HYP01"
+      },
+      "get_maintenance_history": {
+        "machine_id": "STP-01-PRS-HYP01"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "Health index from degradation state indicates remaining useful life",
-        "Should reference maintenance history to see when pump was last replaced",
-        "RUL prediction based on degradation curve trend"
-      ]
+      "key_facts": {
+        "domain": [
+          "Health index from degradation state indicates remaining useful life",
+          "Should reference maintenance history to see when pump was last replaced",
+          "RUL prediction based on degradation curve trend"
+        ],
+        "data": [
+          "Component 'hydraulic_fluid': health_index=0.095, remaining useful life=0 hours",
+          "Component 'hydraulic_pump': health_index=0.599, remaining useful life=443 hours",
+          "Component 'seals': health_index=0.273, remaining useful life=69 hours"
+        ]
+      }
     }
   },
   {
     "id": "EQ-004",
-    "query": "Give me the reliability report for the Stamping stage",
+    "query": "Give me a reliability comparison for all Stamping machines year to date \u00e2\u20ac\u201d MTBF, MTTR, and total failures per machine",
     "expected_agent": "equipment_agent",
-    "expected_tools": ["get_reliability_report"],
+    "expected_tools": [
+      "get_reliability_report"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_reliability_report",
+        "required_args": {}
+      }
+    ],
     "ground_truth": {
-      "key_facts": [
-        "Report should cover all machines at STP-01-PRS, STP-02-PRS, STP-03-TRM",
-        "Should include MTBF, MTTR, availability percentage per machine",
-        "Should flag any machine with MTBF below 200 hours or MTTR above 4 hours"
-      ]
+      "key_facts": {
+        "domain": [
+          "Report should cover all machines at STP-01-PRS, STP-02-PRS, STP-03-TRM",
+          "Should include MTBF, MTTR, availability percentage per machine",
+          "Should flag any machine with MTBF below 200 hours or MTTR above 4 hours"
+        ],
+        "data": [
+          "STP-01-PRS-HYP02: avg MTBF=517.2h, avg MTTR=1.04h, avg Availability=99.62%, total failures=16 \u26a0 MOST FAILURES",
+          "STP-01-PRS-HYP01: avg MTBF=632.0h, avg MTTR=0.56h, avg Availability=99.87%, total failures=9 \u26a0 MOST FAILURES",
+          "STP-02-PRS-SRV01: avg MTBF=642.7h, avg MTTR=0.63h, avg Availability=99.84%, total failures=10 \u26a0 MOST FAILURES",
+          "STP-03-TRM-SRV02: avg MTBF=663.0h, avg MTTR=1.23h, avg Availability=99.77%, total failures=7 \u26a0 MOST FAILURES",
+          "STP-03-TRM-SRV01: avg MTBF=724.0h, avg MTTR=0.63h, avg Availability=99.91%, total failures=3"
+        ]
+      }
     }
   },
   {
     "id": "EQ-005",
-    "query": "What's the energy consumption trend for Press 1 this week?",
+    "query": "What's the energy consumption trend for Press 1 over the last 7 days?",
     "expected_agent": "equipment_agent",
-    "expected_tools": ["get_energy_consumption", "get_energy_trend"],
+    "expected_tools": [
+      "get_energy_consumption",
+      "get_energy_trend"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_energy_consumption",
+        "required_args": {
+          "station_id": "STP-01-PRS"
+        }
+      },
+      {
+        "tool": "get_energy_trend",
+        "required_args": {
+          "station_id": "STP-01-PRS"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_energy_consumption": {
+        "station_id": "STP-01-PRS"
+      },
+      "get_energy_trend": {
+        "station_id": "STP-01-PRS"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "Should show daily power draw pattern",
-        "Should identify if consumption is rising, falling, or stable",
-        "Abnormal energy consumption can indicate mechanical issues"
-      ]
+      "key_facts": {
+        "domain": [
+          "Should show daily power draw pattern over the past 7 days",
+          "Should identify if consumption is rising, falling, or stable",
+          "Abnormal energy consumption can indicate mechanical issues like bearing wear"
+        ],
+        "data": [
+          "STP-01-PRS average power draw last 7 days: 64.8 kW",
+          "STP-01-PRS peak power this week: 115.2 kW",
+          "Energy consumption trend: rising"
+        ]
+      }
+    }
+  },
+  {
+    "id": "EQ-011",
+    "query": "What is the lockout/tagout procedure for the Press 1 hydraulic system?",
+    "expected_agent": "equipment_agent",
+    "expected_tools": [
+      "search_sop"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "search_sop",
+        "required_args": {}
+      }
+    ],
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Should return the LOTO procedure for STP-01-PRS hydraulic system",
+          "Must include energy isolation points and verification steps before work begins",
+          "Should reference SOP-STP-01 (Hydraulic Press Operation \u00e2\u20ac\u201d Press 1)"
+        ],
+        "data": [
+          "4 energy isolation points: main electrical disconnect (MCC panel E-STP01 breaker H1), HPU circuit breaker (CB-HYP-01), pneumatic supply valve, hydraulic accumulator bleed valve (AV-001)",
+          "Accumulator must be bled to 0 bar and verified before work begins",
+          "Zero energy verification step: attempt to start HPU \u00e2\u20ac\u201d confirm no response and all hydraulic gauges read 0 bar"
+        ]
+      }
+    }
+  },
+  {
+    "id": "EQ-012",
+    "query": "Press 1 hydraulic pressure sensor is showing an abnormal reading right now. What is the current value in the last hour and what does the SOP say to do?",
+    "expected_agent": "equipment_agent",
+    "expected_tools": [
+      "get_current_readings",
+      "search_sop"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_current_readings",
+        "required_args": {
+          "station_id": "STP-01-PRS"
+        }
+      },
+      {
+        "tool": "search_sop",
+        "required_args": {}
+      }
+    ],
+    "expected_args": {
+      "get_current_readings": {
+        "station_id": "STP-01-PRS"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Should report the current PRS sensor reading for STP-01-PRS-HYP01",
+          "Normal hydraulic pressure range is 200-240 bar (nominal 220 bar) per SOP-STP-01",
+          "Should reference SOP troubleshooting steps: if pressure drops below 200 bar \u00e2\u20ac\u201d stop production, check pump output, inspect relief valve, verify fluid level"
+        ],
+        "data": [
+          "STP-01-PRS-HYP01 hydraulic pressure last 1h \u2014 avg: 223.21 bar, max: 272.4 bar",
+          "STP-01-PRS-HYP01 hydraulic oil temperature last 1h \u2014 avg: 45.47 \u00b0C, max: 78.11 \u00b0C"
+        ]
+      }
     }
   },
   {
     "id": "EQ-006",
-    "query": "Station WLD-01-UBD Robot 1 vibration has been increasing over the last 48 hours. What should we do?",
+    "query": "Station WLD-01-UBD Robot 1 vibration has been increasing over the last 48 hours. What does the sensor show and what should we do?",
     "expected_agent": "equipment_agent",
-    "expected_tools": ["fetch_sensor_data", "get_sensor_trend", "get_degradation_status", "search_equipment_manual"],
+    "expected_tools": [
+      "fetch_sensor_data",
+      "get_sensor_trend",
+      "get_degradation_status",
+      "search_equipment_manual"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "fetch_sensor_data",
+        "required_args": {
+          "machine_id": "WLD-01-UBD-RBT01"
+        }
+      },
+      {
+        "tool": "get_sensor_trend",
+        "required_args": {
+          "machine_id": "WLD-01-UBD-RBT01"
+        }
+      },
+      {
+        "tool": "get_degradation_status",
+        "required_args": {
+          "machine_id": "WLD-01-UBD-RBT01"
+        }
+      },
+      {
+        "tool": "search_equipment_manual",
+        "required_args": {}
+      }
+    ],
+    "expected_args": {
+      "fetch_sensor_data": {
+        "machine_id": "WLD-01-UBD-RBT01"
+      },
+      "get_sensor_trend": {
+        "machine_id": "WLD-01-UBD-RBT01"
+      },
+      "get_degradation_status": {
+        "machine_id": "WLD-01-UBD-RBT01"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "Increasing vibration on a robot typically indicates joint reducer wear or bearing degradation",
-        "Should check the vibration trend magnitude against normal range (0.1-2.0 mm/s for robots)",
-        "Reference equipment manual for Fanuc R-2000iC reducer inspection procedure"
-      ],
-      "expected_recommendation": "Schedule inspection of joint reducers, measure backlash, plan for possible reducer replacement"
+      "key_facts": {
+        "domain": [
+          "Vibration spikes above 2.0 mm/s safe limit indicate joint reducer or bearing degradation",
+          "Should check vibration trend magnitude against normal range (0.1-2.0 mm/s for robots)",
+          "Should reference welding robot manual: intermittent peaks above 2.0 mm/s require inspection within 72 hours",
+          "Should recommend reducer backlash check per Fanuc R-2000iC/210F maintenance manual"
+        ],
+        "data": [
+          "WLD-01-UBD-RBT01 vibration mean last 48h: 0.878 mm/s",
+          "WLD-01-UBD-RBT01 vibration peak last 48h: 1.308 mm/s",
+          "Vibration trend (48h): rising",
+          "Peak is within safe limit of 2.0 mm/s per Fanuc specification"
+        ]
+      },
+      "expected_recommendation": "Immediate inspection of joint reducers and bearings \u00e2\u20ac\u201d RUL=0 across all components, peak vibration exceeds safe limit"
     }
   }
 ]

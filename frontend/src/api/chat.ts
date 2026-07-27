@@ -1,9 +1,21 @@
 // SSE chat client for streaming agent responses
 
+import type { Citation, ResponseMode, UsageInfo } from "../types";
+
+export interface ToolResultEvent {
+  tool: string;
+  agent?: string;
+  result_snippet?: string;
+  latency_ms?: number;
+  had_error?: boolean;
+}
+
 export interface ChatStreamCallbacks {
   onToken: (text: string, agent?: string) => void;
   onToolCall: (tool: string, args: Record<string, unknown>, agent?: string) => void;
-  onToolResult: (tool: string, agent?: string) => void;
+  onToolResult: (event: ToolResultEvent) => void;
+  onUsage: (usage: UsageInfo) => void;
+  onCitation: (citation: Citation) => void;
   onDone: (sessionId: string) => void;
   onError: (error: string) => void;
   onSession: (sessionId: string) => void;
@@ -38,6 +50,7 @@ export function streamChat(
 
       const decoder = new TextDecoder();
       let buffer = "";
+      let currentEvent = "";
 
       while (true) {
         const { done, value } = await reader.read();
@@ -48,28 +61,45 @@ export function streamChat(
         buffer = lines.pop() || "";
 
         for (const line of lines) {
+          if (line === "") {
+            currentEvent = "";
+            continue;
+          }
           if (line.startsWith("event: ")) {
+            currentEvent = line.slice(7).trim();
             continue;
           }
           if (line.startsWith("data: ")) {
             const raw = line.slice(6);
             try {
               const data = JSON.parse(raw);
-
-              if (data.text !== undefined) {
-                callbacks.onToken(data.text, data.agent);
-              } else if (data.tool !== undefined && data.args !== undefined) {
-                callbacks.onToolCall(data.tool, data.args, data.agent);
-              } else if (data.tool !== undefined && data.args === undefined) {
-                callbacks.onToolResult(data.tool, data.agent);
-              } else if (data.session_id !== undefined && data.response_length !== undefined) {
-                callbacks.onDone(data.session_id);
-              } else if (data.session_id !== undefined) {
-                callbacks.onSession(data.session_id);
+              switch (currentEvent) {
+                case "token":
+                  callbacks.onToken(data.text, data.agent);
+                  break;
+                case "tool_call":
+                  callbacks.onToolCall(data.tool, data.args, data.agent);
+                  break;
+                case "tool_result":
+                  callbacks.onToolResult(data as ToolResultEvent);
+                  break;
+                case "usage":
+                  callbacks.onUsage(data as UsageInfo);
+                  break;
+                case "citation":
+                  callbacks.onCitation(data as Citation);
+                  break;
+                case "done":
+                  callbacks.onDone(data.session_id);
+                  break;
+                case "session":
+                  callbacks.onSession(data.session_id);
+                  break;
               }
             } catch {
               // Skip non-JSON lines
             }
+            currentEvent = "";
           }
         }
       }
@@ -81,4 +111,29 @@ export function streamChat(
   })();
 
   return () => controller.abort();
+}
+
+export async function fetchFollowUps(responseText: string): Promise<string[]> {
+  const res = await fetch("/api/chat/follow-ups", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ response_text: responseText }),
+  });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.suggestions as string[];
+}
+
+export async function reformatMessage(
+  originalText: string,
+  targetMode: ResponseMode
+): Promise<string> {
+  const res = await fetch("/api/chat/reformat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ original_text: originalText, target_mode: targetMode }),
+  });
+  if (!res.ok) throw new Error(`Reformat failed: ${res.status}`);
+  const data = await res.json();
+  return data.text as string;
 }

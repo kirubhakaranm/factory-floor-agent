@@ -3,80 +3,287 @@
     "id": "AC-001",
     "query": "Create a work order for hydraulic pump inspection on Press 1",
     "expected_agent": "action_agent",
-    "expected_tools": ["create_work_order"],
+    "expected_tools": [
+      "create_work_order"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "create_work_order",
+        "required_args": {
+          "machine_id": "STP-01-PRS-HYP01"
+        }
+      }
+    ],
+    "expected_args": {
+      "create_work_order": {
+        "machine_id": "STP-01-PRS-HYP01"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "Machine ID should be STP-01-PRS-HYP01",
-        "Type should be predictive or preventive",
-        "Should include specific inspection tasks"
-      ]
+      "key_facts": {
+        "domain": [
+          "Machine ID must be STP-01-PRS-HYP01 (Schuler TwinServo 2800 hydraulic press)",
+          "Work order type: preventive or predictive",
+          "Must reference hydraulic_press.md manual for inspection tasks",
+          "Inspection tasks must include: oil level check, leak inspection, hydraulic oil sample (particle count + water content per 500h interval), cylinder seal inspection",
+          "Should specify oil specification: ISO VG 46, HLP",
+          "Should identify pump model: Bosch Rexroth A10VSO 140 axial piston pumps (\u00c3\u20142)",
+          "Should note MTBF for hydraulic pump wear: ~8,000 hours \u00e2\u20ac\u201d replace pump cartridge if flow rate reduced or noise increased",
+          "Priority and assigned technician should be included"
+        ],
+        "data": []
+      }
     }
   },
   {
     "id": "AC-002",
     "query": "Write an 8D report for the weld porosity issue at Station WLD-01-UBD",
     "expected_agent": "action_agent",
-    "expected_tools": ["create_8d_report", "search_past_issues", "search_sop"],
+    "expected_tools": [
+      "create_8d_report",
+      "search_past_issues",
+      "search_sop"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "search_past_issues",
+        "required_args": {}
+      },
+      {
+        "tool": "search_sop",
+        "required_args": {}
+      },
+      {
+        "tool": "create_8d_report",
+        "required_args": {}
+      }
+    ],
     "ground_truth": {
-      "key_facts": [
-        "Should reference ISSUE-2025-001 for historical context",
-        "All 8 disciplines must be addressed",
-        "Root cause should be specific (zinc coating weight variation)"
-      ]
+      "key_facts": {
+        "domain": [
+          "Must reference ISSUE-2025-001 from troubleshooting_db (weld porosity on underbody, 2025-03-15, 47 units affected)",
+          "Must reference welding_underbody.md SOP for porosity response: extend squeeze time by 2 cycles, clean parts, verify coating spec",
+          "All 8 disciplines required: D1 team, D2 problem description, D3 containment, D4 root cause, D5 permanent corrective actions, D6 verify, D7 preventive, D8 lessons learned",
+          "D2 problem: porosity rate 12% on underbody spot welds at WLD-01-UBD (normal <2%)",
+          "D3 containment: quarantine affected lot, 100% peel test on last 50 bodies, extend squeeze time 8\u00e2\u2020\u201910 cycles",
+          "D4 root cause: SUP-MTL01 steel lot had zinc coating weight 120 g/m\u00c2\u00b2 vs spec 80-100 g/m\u00c2\u00b2 \u00e2\u20ac\u201d excess zinc off-gassing during weld",
+          "D5 corrective: reject lot SW-2025-0312, issue NCR-MTL0101-00008, extend squeeze time 8\u00e2\u2020\u201910 cycles",
+          "D7 preventive: add zinc coating weight measurement (X-ray fluorescence) to receiving inspection SOP",
+          "D8 lesson: dimensional pass at receiving does not guarantee weld quality \u00e2\u20ac\u201d zinc coating weight must be independently verified"
+        ],
+        "data": []
+      }
     }
   },
   {
     "id": "AC-003",
-    "query": "Issue a supplier NCR against SteelWorks for lot SW-2026-0501 dimensional nonconformance",
+    "query": "Issue a supplier NCR against SteelWorks for lot SUP-MTL01-LOT-2605-017 which failed receiving inspection",
     "expected_agent": "action_agent",
-    "expected_tools": ["create_supplier_ncr"],
+    "expected_tools": [
+      "create_supplier_ncr",
+      "get_receiving_inspections"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_receiving_inspections",
+        "required_args": {
+          "supplier_id": "SUP-MTL01"
+        }
+      },
+      {
+        "tool": "create_supplier_ncr",
+        "required_args": {
+          "supplier_id": "SUP-MTL01"
+        }
+      }
+    ],
+    "expected_args": {
+      "create_supplier_ncr": {
+        "supplier_id": "SUP-MTL01"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "Supplier ID: SUP-MTL01",
-        "Must include specific lot number",
-        "Must specify the nonconformance (dimensional out of spec)",
-        "Must include disposition recommendation"
-      ]
+      "key_facts": {
+        "domain": [
+          "Supplier: SUP-MTL01 \u00e2\u20ac\u201d SteelWorks Inc.",
+          "NCR must include: NCR ID (format NCR-MTL0101-XXXXX), date, supplier contact, affected material description",
+          "Disposition recommendation must be one of: return to supplier / use-as-is with MRB approval / rework",
+          "Must reference existing NCR history: SUP-MTL01 has 2 prior NCRs (NCR-MTL0101-00001 contamination Jan-08, NCR-MTL0101-00003 quantity short Jan-29) \u00e2\u20ac\u201d escalation context",
+          "Must include containment action: quarantine affected lot pending disposition",
+          "Must request 8D corrective action response from supplier within defined timeline (typically 30 days)"
+        ],
+        "data": [
+          "Lot SUP-MTL01-LOT-2605-017: RAW-STL-001 (Steel sheet 1.2mm CR), result=fail, disposition=reject",
+          "Inspection date: 2026-05-20"
+        ]
+      }
     }
   },
   {
     "id": "AC-004",
-    "query": "Create a PDCA record for the weld parameter change we evaluated",
+    "query": "Create a PDCA record for the weld parameter change at WLD-01-UBD implemented on 2026-03-01. We increased weld current from 8,200A to 8,500A, electrode force from 370 to 400 daN, and squeeze time from 45 to 50 cycles. The 30-day before/after analysis showed rework rate improved from 3.10 to 2.70 per day and Cpk for nugget diameter improved from 1.404 to 1.527.",
     "expected_agent": "action_agent",
-    "expected_tools": ["create_pdca_record"],
+    "expected_tools": [
+      "create_pdca_record"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "create_pdca_record",
+        "required_args": {}
+      }
+    ],
     "ground_truth": {
-      "key_facts": [
-        "Must include all 4 PDCA sections",
-        "CHECK section must include quantified before/after metrics",
-        "ACT section must have a clear decision: standardize, modify, or revert"
-      ]
+      "key_facts": {
+        "domain": [
+          "DO: weld parameter change on 2026-03-01 \u2014 current 8,200\u21928,500A, electrode force 370\u2192400 daN, squeeze time 45\u219250 cycles",
+          "CHECK: rework rate before 3.10/day, after 2.70/day \u2014 improvement approximately 12.9% or 13%",
+          "CHECK: nugget diameter Cpk before 1.404, after 1.527 \u2014 improvement approximately 8.7%",
+          "ACT: decision must be STANDARDIZE \u2014 both rework rate and Cpk improved, net positive outcome",
+          "Response must include a PDCA Document ID from the tool output confirming record was created"
+        ],
+        "data": []
+      }
     }
   },
   {
     "id": "AC-005",
-    "query": "Schedule preventive maintenance for the curing oven next week",
+    "query": "Schedule preventive maintenance for the curing oven (PNT-03-CLR-OVN01) on 2026-04-07",
     "expected_agent": "action_agent",
-    "expected_tools": ["schedule_maintenance"],
+    "expected_tools": [
+      "get_maintenance_history",
+      "search_specification",
+      "schedule_maintenance"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_maintenance_history",
+        "required_args": {
+          "machine_id": "PNT-03-CLR-OVN01"
+        }
+      },
+      {
+        "tool": "search_specification",
+        "required_args": {}
+      },
+      {
+        "tool": "schedule_maintenance",
+        "required_args": {
+          "machine_id": "PNT-03-CLR-OVN01"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_maintenance_history": {
+        "machine_id": "PNT-03-CLR-OVN01"
+      },
+      "schedule_maintenance": {
+        "machine_id": "PNT-03-CLR-OVN01"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "Machine should be PNT-03-CLR-OVN01",
-        "Type should be preventive",
-        "Should reference maintenance schedule from equipment manual"
-      ]
+      "key_facts": {
+        "domain": [
+          "Machine: PNT-03-CLR-OVN01 (D\u00c3\u00bcrr EcoInCure 4.0), station PNT-03-CLR",
+          "Type: preventive, scheduled date: 2026-04-07",
+          "Must reference curing_oven.md manual for monthly PM tasks",
+          "Monthly PM tasks must include: temperature uniformity survey (12-channel Datapaq), conveyor chain lubrication (high-temp food-grade grease), burner nozzle cleaning and gas pressure check (25 mbar nominal), door seal inspection (replace if gap >5mm)",
+          "Machine has 14,000 operating hours \u00e2\u20ac\u201d note annual overhaul tasks approaching",
+          "Last preventive PM was 2026-03-17 \u00e2\u20ac\u201d scheduling 2026-04-07 is consistent with monthly cadence"
+        ],
+        "data": [
+          "Machine: PNT-03-CLR-OVN01, model D\u00c3\u00bcrr EcoInCure 4.0, station PNT-03-CLR",
+          "Total operating hours: 14,000h",
+          "Last preventive PM: 2026-03-17 (48 min, $383.34)",
+          "Previous preventive PMs: 2026-02-20, 2026-01-26 \u00e2\u20ac\u201d monthly cadence confirmed",
+          "One corrective event on 2026-03-20 (breakdown, 95 min, $392.11) \u00e2\u20ac\u201d flag in work order context"
+        ]
+      }
     }
   },
   {
     "id": "AC-006",
-    "query": "Write an incident report for the paint booth temperature excursion that caused orange peel defects",
+    "query": "Write an incident report for the paint booth temperature excursion at PNT-02-PRM on 2025-04-22 that caused orange peel defects on 31 vehicles",
     "expected_agent": "action_agent",
-    "expected_tools": ["create_incident_report", "search_past_issues"],
+    "expected_tools": [
+      "create_incident_report",
+      "search_past_issues"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "search_past_issues",
+        "required_args": {}
+      },
+      {
+        "tool": "create_incident_report",
+        "required_args": {}
+      }
+    ],
     "ground_truth": {
-      "key_facts": [
-        "Should reference ISSUE-2025-002",
-        "Root cause: HVAC chiller compressor failure",
-        "Should include cost impact ($18,600 rework)",
-        "Preventive actions: temperature alarm on HMI, auto-pause production"
-      ]
+      "key_facts": {
+        "domain": [
+          "Must retrieve ISSUE-2025-002 from troubleshooting_db via search_past_issues",
+          "Incident report must include: date/time, station, affected units, immediate actions, root cause, corrective actions, preventive actions, cost impact",
+          "Root cause must be specific: HVAC chiller compressor tripped on high-pressure alarm at 09:10 AM \u00e2\u20ac\u201d booth temperature rose from 23\u00c2\u00b0C to 27\u00c2\u00b0C (spec 21\u00e2\u20ac\u201c25\u00c2\u00b0C) over 90 minutes",
+          "Must explain mechanism: higher temperature caused faster solvent evaporation \u00e2\u2020\u2019 poor flow-out \u00e2\u2020\u2019 orange peel texture",
+          "HVAC alarm was logged on BMS but not relayed to paint shop operator HMI \u00e2\u20ac\u201d operator was unaware",
+          "Corrective actions: repaired HVAC chiller (replaced faulty high-pressure switch), reworked 31 vehicles (wet sand 2000 grit + re-clearcoat)",
+          "Preventive actions: booth temperature alarm added to operator HMI, auto-pause if >26\u00c2\u00b0C for >5 min, redundant temperature sensor, HVAC PM increased to monthly"
+        ],
+        "data": [
+          "Date: 2025-04-22 | Station: PNT-02-PRM | Severity: Major",
+          "Units affected: 31 of 78 vehicles during Day shift (39.7% defect rate vs normal <5%)",
+          "Root cause: booth temperature reached 27\u00c2\u00b0C (spec 21\u00e2\u20ac\u201c25\u00c2\u00b0C) \u00e2\u20ac\u201d 2\u00c2\u00b0C above upper limit",
+          "Rework cost: $18,600 ($600/vehicle \u00c3\u2014 31 vehicles)",
+          "HVAC chiller fault: high-pressure switch faulty, reading 15% high \u00e2\u20ac\u201d caused spurious compressor trip"
+        ]
+      }
+    }
+  },
+  {
+    "id": "AC-009",
+    "query": "Write an incident report for the hydraulic cylinder seal failure on Press 1 (STP-01-PRS-HYP01) on 2026-02-18. Include the sensor trend data from the 7 days leading up to the failure and reference the SOP for hydraulic system response.",
+    "expected_agent": "action_agent",
+    "expected_tools": [
+      "get_sensor_trend",
+      "search_sop",
+      "create_incident_report"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_sensor_trend",
+        "required_args": {
+          "machine_id": "STP-01-PRS-HYP01"
+        }
+      },
+      {
+        "tool": "search_sop",
+        "required_args": {}
+      },
+      {
+        "tool": "create_incident_report",
+        "required_args": {}
+      }
+    ],
+    "expected_args": {
+      "get_sensor_trend": {
+        "machine_id": "STP-01-PRS-HYP01"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Should retrieve hydraulic pressure and temperature sensor trend for STP-01-PRS-HYP01 for the 7 days before 2026-02-18",
+          "Should reference SOP-STP-01 (stamping_press1.md) for hydraulic system troubleshooting \u2014 pressure drop below 200 bar and oil temp above 65\u00b0C both trigger stop-production protocol",
+          "Incident report must include: failure ID FLR-STP01-2602-002, affected machine STP-01-PRS-HYP01, component failed (cylinder seal), failure date 2026-02-18, downtime and cost",
+          "Root cause from failure record: excessive wear on cylinder seal exceeded service life threshold \u2014 detected by sensor alert",
+          "Corrective action: cylinder seal replaced. Preventive action: increase inspection frequency for cylinder seal",
+          "Should include quantified impact: 14 min downtime, total cost $1,410.06 (parts $890.23 + labor $19.83 + lost production $500.00)"
+        ],
+        "data": [
+          "STP-01-PRS-HYP01 Hydraulic pressure last 7 days \u2014 mean: 211.25 bar, peak: 279.6 bar",
+          "STP-01-PRS-HYP01 Hydraulic oil temperature last 7 days \u2014 mean: 44.94 \u00b0C, peak: 82.52 \u00b0C"
+        ]
+      }
     }
   }
 ]

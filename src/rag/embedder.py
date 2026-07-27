@@ -115,24 +115,30 @@ def search(
 
 
 def search_sops(query: str, station_id: str | None = None, n_results: int = 3) -> list[dict]:
+    """Search the RAG corpus for SOP documents, optionally scoped to a station."""
     return search(query, doc_type="sop", station_id=station_id, n_results=n_results)
 
 
 def search_manuals(query: str, n_results: int = 3) -> list[dict]:
+    """Search the RAG corpus for equipment or process manual documents."""
     return search(query, doc_type="manual", n_results=n_results)
 
 
 def search_specs(query: str, n_results: int = 3) -> list[dict]:
+    """Search the RAG corpus for process or product specification documents."""
     return search(query, doc_type="spec", n_results=n_results)
 
 
 def search_troubleshooting(query: str, station_id: str | None = None, n_results: int = 5) -> list[dict]:
+    """Search the troubleshooting knowledge base, optionally scoped to a station."""
     return search(query, doc_type="troubleshooting", station_id=station_id, n_results=n_results)
 
 
 def search_fmea(query: str, n_results: int = 3) -> list[dict]:
+    """Search FMEA documents for failure modes and their effects."""
     return search(query, doc_type="fmea", n_results=n_results)
 
 
 def search_case_studies(query: str, n_results: int = 3) -> list[dict]:
+    """Search historical case study documents for past incidents and resolutions."""
     return search(query, doc_type="case_study", n_results=n_results)

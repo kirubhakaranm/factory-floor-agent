@@ -19,6 +19,7 @@ _producer: Producer | None = None
 
 
 def get_producer() -> Producer:
+    """Return (or create) the module-level singleton Kafka producer."""
     global _producer
     if _producer is None:
         _producer = Producer({
@@ -31,7 +32,8 @@ def get_producer() -> Producer:
     return _producer
 
 
-def _delivery_callback(err, msg) -> None:
+def _delivery_callback(err: Exception | None, msg: object) -> None:
+    """Log a delivery error if a produced message fails to reach the broker."""
     if err:
         logger.error("Message delivery failed", extra={"error": str(err), "topic": msg.topic()})
 

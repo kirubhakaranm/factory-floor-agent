@@ -106,3 +106,23 @@ CREATE TABLE IF NOT EXISTS primeev_telemetry.process_capability_history
 )
 ENGINE = MergeTree()
 ORDER BY (station_id, parameter, timestamp);
+
+CREATE TABLE IF NOT EXISTS primeev_telemetry.agent_interactions
+(
+    timestamp DateTime64(3),
+    interaction_id String,
+    session_id String,
+    sub_agent String,
+    input_tokens UInt32,
+    output_tokens UInt32,
+    cache_read_tokens UInt32,
+    cost_usd Float64,
+    ttft_ms UInt32,
+    total_latency_ms UInt32,
+    tool_call_count UInt16,
+    had_error UInt8,
+    response_length_chars UInt32
+)
+ENGINE = MergeTree()
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (sub_agent, timestamp);

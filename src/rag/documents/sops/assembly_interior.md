@@ -46,3 +46,44 @@ Installation of dashboard, center console, seats, headliner, door trim, and main
 | Door trim (×4) | 20 sec each | 80 sec total |
 | Seats (×4-5) | 15 sec each | 60-75 sec total |
 | Total | ~240 sec | Station cycle time target |
+
+## Model Changeover Procedure — PE-SD100 ↔ PE-SV200
+
+**Trigger:** Any switch between Sedan (PE-SD100) and SUV (PE-SV200) on Assembly Line  
+**Minimum changeover time target:** 45 minutes  
+**Required sign-offs:** Production Supervisor + Quality Engineer
+
+### Pre-Changeover Checklist
+
+1. Confirm current model batch is complete — no WIP units in station
+2. Notify downstream stations (ASM-03-FNL, QAT-01-ALN) of model switch
+3. Print new traveler and BOM from MES for incoming model
+
+### Tooling and Fixture Swap
+
+| Item | PE-SD100 | PE-SV200 | Action |
+|------|----------|----------|--------|
+| Seat mounting fixture | 4-seat config | 5-seat config (3rd row) | Swap fixture, verify torque spec |
+| Dashboard sub-assembly | Sedan dash | SUV dash with panoramic roof controls | Change sub-assembly cart |
+| Wiring harness routing guide | Standard | Extended (SUV longer body) | Swap routing template |
+| Headliner clip template | 12-clip | 14-clip (panoramic roof model) | Swap template |
+
+### BOM Changeover Steps
+
+1. In MES: close current model production order, open new model order
+2. Scan new BOM QR code at station kiosk — verify model ID displayed matches body on line
+3. Pull correct sub-assembly kits from supermarket (dashboard, seats, door trim — model-specific)
+4. Return unused previous-model components to supermarket — do not mix model parts
+
+### First Article Inspection
+
+1. Build first unit of new model at 50% cycle time (do not rush)
+2. Perform full dimensional check per new model control plan
+3. Verify seat belt anchor torque recorded under correct VIN
+4. Quality Engineer sign-off required before releasing line to full production speed
+
+### Changeover Sign-Off
+
+- Production Supervisor: confirms tooling swap complete and BOM updated in MES
+- Quality Engineer: confirms first article inspection passed
+- Document changeover in shift log with start time, end time, and first-article VIN

@@ -1,0 +1,164 @@
+[
+  {
+    "id": "CL-001",
+    "category": "clarification",
+    "query": "What's the failure rate?",
+    "expected_agent": "root_agent",
+    "expected_tools": [],
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Query is missing: machine or station ID, time period",
+          "Agent must NOT assume a default machine or time period and proceed",
+          "Agent must ask: which machine or station, and over what time period",
+          "Agent may list examples of valid machine IDs to help the user (e.g., STP-01-PRS-HYP01, WLD-01-UBD)"
+        ],
+        "data": []
+      },
+      "required_clarifications": [
+        "Which machine or station?",
+        "Over what time period?"
+      ],
+      "expected_behavior": "Asks for machine/station and time period before retrieving any data — does not guess or return failure rate for an arbitrary machine"
+    }
+  },
+  {
+    "id": "CL-002",
+    "category": "clarification",
+    "query": "Schedule a PM.",
+    "expected_agent": "root_agent",
+    "expected_tools": [],
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Query is missing: machine ID, PM type (preventive/corrective/predictive), scheduled date",
+          "Agent must NOT create a work order with assumed values",
+          "Agent must ask: which machine, what type of PM, and when",
+          "Agent may ask if the user wants to check maintenance history first to determine the right interval"
+        ],
+        "data": []
+      },
+      "required_clarifications": [
+        "Which machine?",
+        "What type of PM?",
+        "What date to schedule?"
+      ],
+      "expected_behavior": "Asks for machine ID, PM type, and date before calling any tools — does not create a work order with assumed values"
+    }
+  },
+  {
+    "id": "CL-003",
+    "category": "clarification",
+    "query": "Is quality trending down?",
+    "expected_agent": "root_agent",
+    "expected_tools": [],
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Query is missing: which station or stage, which quality metric (Cpk, defect rate, FPY), time period",
+          "Agent must NOT pick a station or metric arbitrarily and run the analysis",
+          "Agent must ask: which station or stage, which metric to evaluate",
+          "Agent may offer to run a factory-wide OEE quality component summary if the user wants a broad overview"
+        ],
+        "data": []
+      },
+      "required_clarifications": [
+        "Which station or stage?",
+        "Which quality metric (Cpk, defect rate, FPY)?"
+      ],
+      "expected_behavior": "Asks which station and metric to evaluate — does not run analysis for an arbitrarily chosen station"
+    }
+  },
+  {
+    "id": "CL-004",
+    "category": "clarification",
+    "query": "Compare before and after.",
+    "expected_agent": "root_agent",
+    "expected_tools": [],
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Query is missing: what change to evaluate, what date the change occurred, which metric to compare, which station or machine",
+          "Agent must NOT assume a recent change or default metric",
+          "Agent must ask: what change was made, on what date, and which metric to compare"
+        ],
+        "data": []
+      },
+      "required_clarifications": [
+        "What change are you evaluating?",
+        "What date did the change occur?",
+        "Which metric to compare (Cpk, defect rate, MTTR, OEE)?"
+      ],
+      "expected_behavior": "Asks for the change description, change date, and metric before calling compare_periods — does not assume a recent change"
+    }
+  },
+  {
+    "id": "CL-005",
+    "category": "clarification",
+    "query": "Create an 8D report.",
+    "expected_agent": "root_agent",
+    "expected_tools": [],
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Query is missing: which issue or problem to document, which station or machine, what the defect or failure was",
+          "Agent must NOT create an 8D report with fabricated or assumed issue details",
+          "Agent must ask: what problem is the 8D for, which station or machine is involved",
+          "Agent may ask if there is an existing issue record (e.g., ISSUE-2025-001) or failure ID to reference"
+        ],
+        "data": []
+      },
+      "required_clarifications": [
+        "What problem or issue is the 8D documenting?",
+        "Which station or machine is involved?"
+      ],
+      "expected_behavior": "Asks for the problem description and affected station/machine before starting the 8D — does not generate report with assumed content"
+    }
+  },
+  {
+    "id": "CL-006",
+    "category": "clarification",
+    "query": "What's the OEE?",
+    "expected_agent": "root_agent",
+    "expected_tools": [],
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Query is missing: which station or stage, which time period",
+          "Agent must NOT return OEE for an arbitrary station or default to the most recent period without asking",
+          "Agent must ask: which station or stage, and for what period",
+          "Agent may offer to return a factory-wide OEE summary across all 5 stages if the user wants an overview"
+        ],
+        "data": []
+      },
+      "required_clarifications": [
+        "Which station or stage?",
+        "For what time period?"
+      ],
+      "expected_behavior": "Asks which station/stage and time period — offers factory-wide summary as an alternative if user wants a broad view"
+    }
+  },
+  {
+    "id": "CL-007",
+    "category": "clarification",
+    "query": "Run the usual report.",
+    "expected_agent": "root_agent",
+    "expected_tools": [],
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Agent has no memory of prior sessions or a configured 'usual report'",
+          "Agent must NOT fabricate or guess what 'usual' means",
+          "Agent must ask the user to specify what report they want",
+          "Agent may list available report types: OEE summary, defect rate by station, MTBF/MTTR, Cpk trend, supplier scorecard"
+        ],
+        "data": []
+      },
+      "required_clarifications": [
+        "What report are you referring to? No default report is configured.",
+        "Which data or metrics should the report cover?"
+      ],
+      "expected_behavior": "Clarifies that no 'usual report' is configured — asks the user to specify what data to include, lists available report types"
+    }
+  }
+]

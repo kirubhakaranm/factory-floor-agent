@@ -1,0 +1,149 @@
+[
+  {
+    "id": "CON-001",
+    "category": "conflicting_data",
+    "query": "What is the PM interval for STP-01-PRS-HYP01 per the standard operating procedure?",
+    "expected_agent": "equipment_agent",
+    "expected_tools": [
+      "search_sop",
+      "get_maintenance_history"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "search_sop",
+        "required_args": {}
+      },
+      {
+        "tool": "get_maintenance_history",
+        "required_args": {
+          "machine_id": "STP-01-PRS-HYP01"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_maintenance_history": {
+        "machine_id": "STP-01-PRS-HYP01"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "SOP-STP-01 (stamping_press1.md) specifies 500h PM interval (~3 weeks at full production)",
+          "Maintenance history shows actual PM cadence of ~17-18 days = approximately 350h interval",
+          "The interval was changed from 500h to 350h on 2026-02-01 (IM-002) but SOP has not been updated",
+          "Agent must surface this conflict \u00e2\u20ac\u201d SOP says 500h, actual practice is 350h",
+          "Agent must NOT pick one answer and ignore the other \u00e2\u20ac\u201d both sources must be cited",
+          "Agent should flag: SOP update is pending to reflect the 2026-02-01 interval change"
+        ],
+        "data": [
+          "SOP-STP-01 specified interval: 500 operating hours",
+          "Actual PM dates: 2026-01-17, 2026-02-03 (17d), 2026-02-20 (17d), 2026-03-08 (16d), 2026-03-25 (17d) \u00e2\u20ac\u201d consistent with ~350h interval"
+        ]
+      },
+      "expected_behavior": "Cites both SOP (500h) and maintenance history (350h cadence) \u00e2\u20ac\u201d surfaces the conflict and flags that SOP needs updating to reflect the 2026-02-01 interval change"
+    }
+  },
+  {
+    "id": "CON-002",
+    "category": "conflicting_data",
+    "query": "The FMEA shows WLD-01-UBD is in a 30-day monitoring period after the parameter change. Should we standardize the new parameters?",
+    "expected_agent": "improvement_agent",
+    "expected_tools": [
+      "get_cpk",
+      "get_defect_rates",
+      "search_fmea_risks"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "search_fmea_risks",
+        "required_args": {}
+      },
+      {
+        "tool": "get_cpk",
+        "required_args": {
+          "station_id": "WLD-01-UBD"
+        }
+      },
+      {
+        "tool": "get_defect_rates",
+        "required_args": {
+          "station_id": "WLD-01-UBD"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_cpk": {
+        "station_id": "WLD-01-UBD"
+      },
+      "get_defect_rates": {
+        "station_id": "WLD-01-UBD"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "PFMEA-WLD-001 High RPN action note says 'Parameter change implemented 2026-03-01 \u00e2\u20ac\u201d monitor for 30 days' \u00e2\u20ac\u201d RAG source (pfmea_welding.md line 27)",
+          "30-day monitoring window ended 2026-03-31 \u00e2\u20ac\u201d the monitoring period has passed",
+          "DB data shows Cpk improved from avg 1.404 (before) to avg 1.527 (March) \u00e2\u20ac\u201d overall trend supports standardization",
+          "7 of 31 March days had Cpk below 1.33 (Mar-05=1.076, Mar-06=1.166, Mar-09=1.296, Mar-12=1.284, Mar-18=1.232, Mar-21=1.185, Mar-31=1.272) \u00e2\u20ac\u201d agent should note day-to-day variation but not let it override the positive average trend",
+          "Agent must reconcile: FMEA monitoring note is a historical record, not an active hold \u00e2\u20ac\u201d window has closed",
+          "Agent must NOT refuse to recommend standardization just because FMEA note still says monitoring",
+          "Agent should recommend: STANDARDIZE \u00e2\u20ac\u201d monitoring complete, average data supports it; flag the 5 below-threshold days as monitoring items; recommend FMEA note update"
+        ],
+        "data": [
+          "FMEA monitoring period: 2026-03-01 to 2026-03-31 \u00e2\u20ac\u201d now complete",
+          "WLD-01-UBD nugget_diameter Cpk March 2026: avg=1.527 (31 days), 7 days below 1.33 threshold, 24 days above \u00e2\u20ac\u201d overall positive"
+        ]
+      },
+      "expected_behavior": "Retrieves FMEA note and Cpk/defect data \u00e2\u20ac\u201d surfaces that monitoring period has ended, data supports standardization, recommends STANDARDIZE and flagging FMEA note for update"
+    }
+  },
+  {
+    "id": "CON-003",
+    "category": "conflicting_data",
+    "query": "The curing oven PNT-03-CLR-OVN01 had a PM on 2026-03-17 and broke down on 2026-03-20. Was the PM effective, and is the machine overdue for its next PM?",
+    "expected_agent": "equipment_agent",
+    "expected_tools": [
+      "get_maintenance_history",
+      "search_specification"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_maintenance_history",
+        "required_args": {
+          "machine_id": "PNT-03-CLR-OVN01"
+        }
+      },
+      {
+        "tool": "search_specification",
+        "required_args": {}
+      }
+    ],
+    "expected_args": {
+      "get_maintenance_history": {
+        "machine_id": "PNT-03-CLR-OVN01"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "curing_oven.md specifies monthly PM \u00e2\u20ac\u201d next PM due ~2026-04-17 (30 days after 2026-03-17) \u00e2\u20ac\u201d not yet overdue",
+          "Breakdown FLR-PNT03-2603-001: fan motor overstrain (Overstrain Failure), major severity, 95 min, $5,142.11 total (parts $257.53 + labor $134.58 + lost production $4,750.00)",
+          "Conflict: the 2026-03-17 monthly PM covered temperature survey, chain lubrication, burner nozzles, door seals \u00e2\u20ac\u201d fan motor inspection is NOT in the monthly scope",
+          "Fan motor / recirculation fan inspection is quarterly in curing_oven.md \u00e2\u20ac\u201d the monthly PM could not have caught this failure mode",
+          "Agent must flag this conflict \u00e2\u20ac\u201d PM was completed correctly per monthly scope, but quarterly fan inspection was overdue and missed the overstrain condition",
+          "Agent should NOT just report 'not overdue' without flagging the PM scope gap as the root cause of the ineffectiveness",
+          "Quarterly fan inspection was NEVER performed in the dataset (Jan\u00e2\u20ac\u201cMar 2026 = 3 months of data, 3 preventive PMs all with identical monthly parts: thermocouple, gasket set, air filter \u00e2\u20ac\u201d no fan impeller in any of them)",
+          "Recommended action: schedule overdue quarterly fan inspection immediately; add fan motor load/current monitoring to monthly checklist given the $4,750 lost production cost of the breakdown"
+        ],
+        "data": [
+          "Last 3 preventive PMs for STP-01-PRS-HYP01:",
+          "  2026-06-16: duration=104min, parts=['hydraulic fluid 20L']",
+          "  2026-05-31: duration=99min, parts=['O-ring set', 'hydraulic filter', 'hydraulic fluid 20L']",
+          "  2026-05-14: duration=90min, parts=['hydraulic fluid 20L']"
+        ]
+      },
+      "expected_behavior": "Reports monthly PM cadence (not overdue), identifies breakdown as fan motor overstrain, surfaces that quarterly fan inspection was never performed across 3 months of maintenance records \u00e2\u20ac\u201d this is the root cause of the PM ineffectiveness"
+    }
+  }
+]

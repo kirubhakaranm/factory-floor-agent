@@ -144,6 +144,43 @@ def get_process_capability(
     """)
 
 
+def get_latest_cpk_all() -> list[dict]:
+    """Latest Cpk per (station_id, parameter) across the last 7 days."""
+    anchor = _ANCHOR["process_capability_history"]
+    return query(f"""
+        SELECT
+            station_id,
+            parameter,
+            argMax(cpk, timestamp)                    AS cpk,
+            argMax(cp, timestamp)                     AS cp,
+            argMax(out_of_control_signals, timestamp) AS out_of_control_signals,
+            argMax(trending_alert, timestamp)         AS trending_alert,
+            max(timestamp)                            AS latest_ts
+        FROM primeev_telemetry.process_capability_history
+        WHERE timestamp >= {_ANCHOR["process_capability_history"]} - INTERVAL 7 DAY
+        GROUP BY station_id, parameter
+        ORDER BY station_id, parameter
+    """)
+
+
+def get_all_stations_latest_oee() -> list[dict]:
+    """Get the most-recent OEE snapshot for every station in a single query."""
+    anchor = _ANCHOR["oee_metrics"]
+    return query(f"""
+        SELECT
+            station_id,
+            argMax(oee, timestamp)          AS latest_oee,
+            argMax(availability, timestamp) AS latest_availability,
+            argMax(performance, timestamp)  AS latest_performance,
+            argMax(quality, timestamp)      AS latest_quality,
+            max(timestamp)                  AS latest_ts
+        FROM primeev_telemetry.oee_metrics
+        WHERE timestamp >= {anchor} - INTERVAL 1 DAY
+        GROUP BY station_id
+        ORDER BY station_id
+    """)
+
+
 def get_reliability_metrics(
     machine_id: str,
     period: str = "monthly",
@@ -203,4 +240,53 @@ def compare_shifts(
           AND timestamp >= {anchor} - INTERVAL {days_back} DAY
         GROUP BY shift
         ORDER BY shift
+    """)
+
+
+def compare_periods_metric(
+    station_id: str,
+    metric: str = "oee",
+    recent_days: int = 7,
+    prior_days: int = 7,
+) -> list[dict]:
+    """Compare metric between the most recent N days and the prior N days."""
+    anchor = _ANCHOR["oee_metrics"]
+    return query(f"""
+        SELECT
+            multiIf(
+                timestamp >= {anchor} - INTERVAL {recent_days} DAY,
+                'period_a',
+                'period_b'
+            ) AS period,
+            avg({metric}) AS avg_value,
+            min({metric}) AS min_value,
+            max({metric}) AS max_value,
+            count() AS data_points
+        FROM primeev_telemetry.oee_metrics
+        WHERE station_id = '{station_id}'
+          AND timestamp >= {anchor} - INTERVAL {recent_days + prior_days} DAY
+        GROUP BY period
+        ORDER BY period
+    """)
+
+
+def compare_stations_metric(
+    stage: str,
+    metric: str = "oee",
+    days_back: int = 30,
+) -> list[dict]:
+    """Compare a metric across all stations in a stage, ranked best to worst."""
+    anchor = _ANCHOR["oee_metrics"]
+    return query(f"""
+        SELECT
+            station_id,
+            avg({metric}) AS avg_value,
+            min({metric}) AS min_value,
+            max({metric}) AS max_value,
+            count() AS data_points
+        FROM primeev_telemetry.oee_metrics
+        WHERE startsWith(station_id, '{stage}')
+          AND timestamp >= {anchor} - INTERVAL {days_back} DAY
+        GROUP BY station_id
+        ORDER BY avg_value DESC
     """)

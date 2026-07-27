@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { STAGES, STAGE_STATIONS } from "../types";
-import type { MachineInfo } from "../types";
-import { getStationMachines } from "../api/factory";
+import type { MachineInfo, SensorReading } from "../types";
+import { getStationMachines, getStationSensors } from "../api/factory";
 
 const STATION_NAMES: Record<string, string> = {
   "STP-01-PRS": "Press 1", "STP-02-PRS": "Press 2", "STP-03-TRM": "Trim/Pierce",
@@ -12,23 +12,49 @@ const STATION_NAMES: Record<string, string> = {
   "QAT-01-ALN": "Alignment", "QAT-02-WLT": "Water Leak", "QAT-03-DYN": "Dyno Test",
 };
 
-function SensorGauge({ label, value, unit, min, max, status }: {
-  label: string; value: number; unit: string; min: number; max: number; status: "ok" | "warn" | "critical";
-}) {
+// Display metadata per sensor type
+const SENSOR_META: Record<string, { label: string; unit: string; min: number; max: number }> = {
+  TMP: { label: "Temperature", unit: "°C", min: 10, max: 85 },
+  VIB: { label: "Vibration", unit: "mm/s", min: 0, max: 11 },
+  PRS: { label: "Pressure", unit: "bar", min: 150, max: 280 },
+  TRQ: { label: "Torque", unit: "Nm", min: 0, max: 500 },
+  RPM: { label: "Speed", unit: "RPM", min: 0, max: 3000 },
+  PWR: { label: "Power Draw", unit: "kW", min: 0, max: 160 },
+  FLW: { label: "Flow Rate", unit: "L/min", min: 0, max: 50 },
+  CUR: { label: "Current", unit: "A", min: 0, max: 200 },
+  HUM: { label: "Humidity", unit: "%RH", min: 0, max: 100 },
+};
+
+function sensorStatus(value: number, min: number, max: number): "ok" | "warn" | "critical" {
+  const range = max - min;
+  const pct = (value - min) / range;
+  if (pct < 0 || pct > 1) return "critical";
+  if (pct < 0.1 || pct > 0.9) return "warn";
+  return "ok";
+}
+
+function SensorGauge({ reading }: { reading: SensorReading }) {
+  const sensorType = reading.sensor_type.split(":")[1] || reading.sensor_type;
+  const meta = SENSOR_META[sensorType] || { label: sensorType, unit: reading.unit, min: 0, max: 100 };
+  const { label, unit, min, max } = meta;
+  const value = reading.latest_value;
+  const status = sensorStatus(value, min, max);
   const pct = Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
   const barColor = status === "ok" ? "bg-green-500" : status === "warn" ? "bg-yellow-500" : "bg-red-500";
+  const displayTime = new Date(reading.latest_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-3">
       <div className="flex justify-between items-baseline mb-2">
         <span className="text-xs text-gray-500">{label}</span>
-        <span className="text-sm font-semibold text-gray-800">{value} {unit}</span>
+        <span className="text-sm font-semibold text-gray-800 tabular-nums">{value.toFixed(1)} {unit}</span>
       </div>
       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
         <div className={`h-full ${barColor} rounded-full transition-all`} style={{ width: `${pct}%` }} />
       </div>
       <div className="flex justify-between text-xs text-gray-400 mt-1">
         <span>{min}</span>
+        <span className="text-gray-300">{displayTime}</span>
         <span>{max}</span>
       </div>
     </div>
@@ -39,9 +65,21 @@ export default function StationPage() {
   const [params] = useSearchParams();
   const selectedId = params.get("id") || "STP-01-PRS";
   const [machines, setMachines] = useState<MachineInfo[]>([]);
+  const [sensors, setSensors] = useState<SensorReading[]>([]);
+  const [sensorsLoading, setSensorsLoading] = useState(true);
+  const [sensorsError, setSensorsError] = useState(false);
 
   useEffect(() => {
     getStationMachines(selectedId).then(setMachines).catch(console.error);
+  }, [selectedId]);
+
+  useEffect(() => {
+    setSensorsLoading(true);
+    setSensorsError(false);
+    setSensors([]);
+    getStationSensors(selectedId)
+      .then((data) => { setSensors(data); setSensorsLoading(false); })
+      .catch(() => { setSensorsLoading(false); setSensorsError(true); });
   }, [selectedId]);
 
   const stationName = STATION_NAMES[selectedId] || selectedId;
@@ -78,16 +116,29 @@ export default function StationPage() {
         )}
       </div>
 
-      {/* Sensor Gauges (sample data for layout) */}
+      {/* Live Sensors */}
       <div className="mb-8">
         <h3 className="text-lg font-medium text-gray-700 mb-3">Live Sensors</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <SensorGauge label="Temperature" value={47.2} unit="°C" min={10} max={85} status="ok" />
-          <SensorGauge label="Vibration" value={3.8} unit="mm/s" min={0} max={11} status="warn" />
-          <SensorGauge label="Pressure" value={221} unit="bar" min={150} max={280} status="ok" />
-          <SensorGauge label="Power Draw" value={89} unit="kW" min={0} max={160} status="ok" />
-        </div>
-        <p className="text-xs text-gray-400 mt-2">Live data requires Docker services running (Phase 7)</p>
+        {sensorsLoading && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-white border border-gray-200 rounded-lg p-3 h-20 animate-pulse" />
+            ))}
+          </div>
+        )}
+        {!sensorsLoading && sensorsError && (
+          <p className="text-sm text-gray-400">Sensor data unavailable — ensure Docker services are running.</p>
+        )}
+        {!sensorsLoading && !sensorsError && sensors.length === 0 && (
+          <p className="text-sm text-gray-400">No sensor readings found for {selectedId}.</p>
+        )}
+        {!sensorsLoading && sensors.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {sensors.map((r) => (
+              <SensorGauge key={r.machine_id + r.sensor_type} reading={r} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Machines */}
@@ -103,25 +154,13 @@ export default function StationPage() {
                   m.criticality === "B" ? "bg-yellow-100 text-yellow-700" :
                   "bg-gray-100 text-gray-600"
                 }`}>
-                  {m.criticality}
+                  Criticality {m.criticality}
                 </span>
               </div>
               <div className="text-sm text-gray-600">{m.model}</div>
               <div className="text-xs text-gray-400 mt-1">Type: {m.machine_type}</div>
             </div>
           ))}
-        </div>
-      </div>
-
-      {/* Placeholder sections */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h3 className="font-medium text-gray-700 mb-2">Recent Failures</h3>
-          <p className="text-sm text-gray-400">Connected to Postgres in production</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h3 className="font-medium text-gray-700 mb-2">Quality Summary</h3>
-          <p className="text-sm text-gray-400">Connected to Postgres in production</p>
         </div>
       </div>
     </div>

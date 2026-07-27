@@ -1,0 +1,232 @@
+[
+  {
+    "id": "NF-001",
+    "query": "Issue a supplier NCR against SteelWorks for lot SW-2026-0501 dimensional nonconformance",
+    "expected_agent": "action_agent",
+    "expected_tools": [
+      "get_receiving_inspections",
+      "create_supplier_ncr"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_receiving_inspections",
+        "required_args": {
+          "supplier_id": "SUP-MTL01"
+        }
+      }
+    ],
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Lot SW-2026-0501 does NOT exist in receiving_inspections — agent must flag this clearly",
+          "Agent must NOT silently generate an NCR without surfacing the missing lot",
+          "Expected response: inform user that lot SW-2026-0501 is not found in the system and a receiving inspection record must be logged before the NCR can be issued",
+          "Agent may offer to create the NCR once the user confirms the details manually"
+        ],
+        "data": []
+      },
+      "expected_behavior": "Agent surfaces 'lot not found' — does not hallucinate receiving inspection details"
+    }
+  },
+  {
+    "id": "NF-002",
+    "query": "Trace the production history of VIN PEF-SD100-26-999999",
+    "expected_agent": "production_agent",
+    "expected_tools": [
+      "trace_vin_history"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "trace_vin_history",
+        "required_args": {
+          "vin_id": "PEF-SD100-26-999999"
+        }
+      }
+    ],
+    "expected_args": {
+      "trace_vin_history": {
+        "vin_id": "PEF-SD100-26-999999"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "VIN PEF-SD100-26-999999 does NOT exist in vin_registry",
+          "Agent must clearly state the VIN was not found — no production history available",
+          "Agent must NOT fabricate inspection records, rework events, or station history",
+          "Agent may suggest checking the VIN format or confirming the sequence number"
+        ],
+        "data": []
+      },
+      "expected_behavior": "Agent surfaces 'VIN not found' — does not hallucinate production records"
+    }
+  },
+  {
+    "id": "NF-003",
+    "query": "What's the Cpk for nugget diameter at station WLD-99-XYZ?",
+    "expected_agent": "quality_agent",
+    "expected_tools": [
+      "get_cpk"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_cpk",
+        "required_args": {
+          "station_id": "WLD-99-XYZ"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_cpk": {
+        "station_id": "WLD-99-XYZ"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Station WLD-99-XYZ does NOT exist — valid welding stations are WLD-01-UBD, WLD-02-SDP, WLD-03-RCL",
+          "Agent must clearly state the station ID is not recognized",
+          "Agent must NOT return Cpk values for a non-existent station",
+          "Agent should list valid WLD station IDs so user can correct the query"
+        ],
+        "data": []
+      },
+      "expected_behavior": "Agent surfaces 'station not found' and offers valid station IDs — does not hallucinate Cpk data"
+    }
+  },
+  {
+    "id": "NF-005",
+    "query": "What's the Cpk for nugget_diameter at station STP-01-PRS?",
+    "expected_agent": "quality_agent",
+    "expected_tools": [
+      "get_cpk"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_cpk",
+        "required_args": {
+          "station_id": "STP-01-PRS",
+          "parameter": "nugget_diameter"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_cpk": {
+        "station_id": "STP-01-PRS",
+        "parameter": "nugget_diameter"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "nugget_diameter is a welding parameter — it is only tracked at WLD-01-UBD, not at STP stations",
+          "STP-01-PRS tracks: blank_position, cushion_pressure, draw_depth, panel_thickness, press_force, surface_roughness",
+          "Agent must NOT return Cpk values from WLD-01-UBD or any other station",
+          "Agent must surface the mismatch: nugget_diameter is not a measured parameter at STP-01-PRS",
+          "Agent should list the valid STP-01-PRS parameters so the user can correct the query"
+        ],
+        "data": []
+      },
+      "expected_behavior": "Agent surfaces parameter-station mismatch — does not return Cpk from a different station, lists valid STP-01-PRS parameters instead"
+    }
+  },
+  {
+    "id": "NF-006",
+    "query": "Issue a supplier NCR against SteelWorks for lot SUP-MTL02-LOT-2601-469 — steel sheet dimensional nonconformance",
+    "expected_agent": "action_agent",
+    "expected_tools": [
+      "get_receiving_inspections",
+      "create_supplier_ncr"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_receiving_inspections",
+        "required_args": {
+          "lot_number": "SUP-MTL02-LOT-2601-469"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_receiving_inspections": {
+        "lot_number": "SUP-MTL02-LOT-2601-469"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Lot SUP-MTL02-LOT-2601-469 EXISTS in receiving_inspections — but belongs to AluForm Global (SUP-MTL02), NOT SteelWorks (SUP-MTL01)",
+          "Agent must flag the supplier mismatch before creating the NCR",
+          "Agent must NOT create an NCR attributing this lot to SteelWorks (SUP-MTL01)",
+          "Agent should surface: lot found under AluForm Global (SUP-MTL02) — ask user to confirm correct supplier before proceeding",
+          "Result for this lot: pass / accept — agent should also note the lot passed inspection, which contradicts the nonconformance claim"
+        ],
+        "data": []
+      },
+      "expected_behavior": "Agent surfaces supplier mismatch (lot belongs to AluForm Global, not SteelWorks) and notes the lot passed inspection — does not create NCR without user confirmation"
+    }
+  },
+  {
+    "id": "NF-007",
+    "category": "not_found",
+    "description": "Date range outside dataset — agent must not hallucinate OEE data for a period with no records",
+    "query": "What was the OEE for the WLD stage in December 2025?",
+    "expected_agent": "production_agent",
+    "expected_tools": [
+      "get_oee_metrics"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_oee_metrics",
+        "required_args": {"stage": "WLD"}
+      }
+    ],
+    "expected_args": {
+      "get_oee_metrics": {"station_id": "WLD"}
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "The dataset starts 2026-01-01 — no OEE data exists for December 2025 or any date before 2026-01-01",
+          "Agent must clearly state no data is available for the requested period",
+          "Agent must NOT fabricate or estimate OEE values for December 2025",
+          "Agent should inform the user of the available data range (2026-01-01 to 2026-04-01) and offer to retrieve January 2026 instead"
+        ],
+        "data": []
+      },
+      "expected_behavior": "Agent surfaces 'no data for December 2025' — states the available data range and offers to retrieve the nearest available period instead"
+    }
+  },
+  {
+    "id": "NF-004",
+    "query": "Pull the sensor trend for machine ASM-01-PWR-RBT99 over the last 7 days",
+    "expected_agent": "equipment_agent",
+    "expected_tools": [
+      "get_sensor_trend"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_sensor_trend",
+        "required_args": {
+          "machine_id": "ASM-01-PWR-RBT99"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_sensor_trend": {
+        "machine_id": "ASM-01-PWR-RBT99"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Machine ASM-01-PWR-RBT99 does NOT exist — valid machine at ASM-01-PWR is ASM-01-PWR-RBT01",
+          "Agent must clearly state the machine ID was not found",
+          "Agent must NOT return sensor readings for a non-existent machine",
+          "Agent should suggest the correct machine ID: ASM-01-PWR-RBT01"
+        ],
+        "data": []
+      },
+      "expected_behavior": "Agent surfaces 'machine not found' and suggests correct ID — does not hallucinate sensor data"
+    }
+  }
+]

@@ -1,4 +1,4 @@
-"""ClickHouse client wrapper."""
+"""Singleton ClickHouse client and convenience query/insert helpers."""
 
 import clickhouse_connect
 from clickhouse_connect.driver.client import Client
@@ -9,6 +9,7 @@ _client: Client | None = None
 
 
 def get_clickhouse_client() -> Client:
+    """Return (or create) a module-level singleton ClickHouse client."""
     global _client
     if _client is None:
         _client = clickhouse_connect.get_client(

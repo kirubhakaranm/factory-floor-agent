@@ -24,12 +24,14 @@ class TelemetryGenerator(BaseGenerator):
         start_date: datetime | None = None,
         interval_seconds: int = 60,
         anomaly_rate: float = 0.005,
-    ):
+    ) -> None:
+        """Initialize with sampling interval and anomaly injection rate."""
         super().__init__(days, seed, start_date)
         self.interval_seconds = interval_seconds
         self.anomaly_rate = anomaly_rate
 
     def generate(self) -> dict[str, list[dict[str, Any]]]:
+        """Generate sensor_readings rows for every machine in the factory."""
         readings: list[dict[str, Any]] = []
 
         for machine_id, machine in FACTORY_MACHINES.items():
@@ -39,6 +41,7 @@ class TelemetryGenerator(BaseGenerator):
         return {"sensor_readings": readings}
 
     def _generate_machine_telemetry(self, machine: MachineSpec) -> list[dict[str, Any]]:
+        """Generate all sensor reading rows for a single machine across the simulation window."""
         rows: list[dict[str, Any]] = []
         n_points = (self.days * 86400) // self.interval_seconds
 

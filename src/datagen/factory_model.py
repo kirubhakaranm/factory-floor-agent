@@ -13,6 +13,8 @@ from src.config.constants import (
 
 @dataclass
 class SensorSpec:
+    """Specification for a single sensor type on a machine."""
+
     sensor_type: str
     min_normal: float
     max_normal: float
@@ -23,6 +25,8 @@ class SensorSpec:
 
 @dataclass
 class MachineSpec:
+    """Full specification for a factory machine including its sensor suite."""
+
     machine_id: str
     station_id: str
     machine_type: str
@@ -35,6 +39,8 @@ class MachineSpec:
 
 @dataclass
 class StationSpec:
+    """Full specification for a production station including its machines."""
+
     station_id: str
     stage: str
     name: str
@@ -46,6 +52,8 @@ class StationSpec:
 
 @dataclass
 class Component:
+    """A single BOM component consumed at a specific station."""
+
     part_number: str
     description: str
     category: str
@@ -56,6 +64,8 @@ class Component:
 
 @dataclass
 class VehicleModel:
+    """Vehicle model definition with its associated BOM components."""
+
     model_id: str
     name: str
     year: int
@@ -71,6 +81,7 @@ SENSOR_UNITS = {
 
 
 def _build_sensors(machine_type: str) -> list[SensorSpec]:
+    """Build the list of SensorSpec objects for a given machine type."""
     ranges = SENSOR_RANGES.get(machine_type, {})
     return [
         SensorSpec(
@@ -86,6 +97,7 @@ def _build_sensors(machine_type: str) -> list[SensorSpec]:
 
 
 def build_machines() -> dict[str, MachineSpec]:
+    """Construct a mapping of machine_id to MachineSpec from the constants registry."""
     result = {}
     for machine_id, info in MACHINES.items():
         mtype = info["type"]
@@ -111,6 +123,7 @@ def build_machines() -> dict[str, MachineSpec]:
 
 
 def build_stations() -> dict[str, StationSpec]:
+    """Construct a mapping of station_id to StationSpec, populating each with its machines."""
     machines = build_machines()
     cycle_times = {
         "STP-01-PRS": 45.0, "STP-02-PRS": 45.0, "STP-03-TRM": 30.0,
@@ -142,6 +155,7 @@ def build_stations() -> dict[str, StationSpec]:
 
 
 def build_vehicle_models() -> dict[str, VehicleModel]:
+    """Construct a mapping of model_id to VehicleModel with full BOM definitions."""
     bom_definitions: dict[str, list[Component]] = {
         "PE-SD100": [
             Component("CHS-SD100-001", "Sedan chassis frame", "CHS", "STP-01-PRS", "SUP-MTL01", 2800.0),

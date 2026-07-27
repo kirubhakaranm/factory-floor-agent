@@ -1,0 +1,199 @@
+{
+  "uid": "primeev-cpk",
+    "title": "PrimeEV — Process Capability (SPC / Cpk)",
+    "tags": ["primeev", "quality", "spc"],
+    "schemaVersion": 36,
+    "version": 2,
+    "refresh": "5m",
+    "time": { "from": "now-200d", "to": "now" },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Latest Cpk per Station / Parameter",
+        "type": "table",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 0, "y": 0, "w": 14, "h": 12 },
+        "targets": [
+          {
+            "rawSql": "SELECT station_id, parameter, round(argMax(cpk, timestamp), 3) AS cpk, round(argMax(cp, timestamp), 3) AS cp, argMax(out_of_control_signals, timestamp) AS ooc_signals, argMax(trending_alert, timestamp) AS alert FROM primeev_telemetry.process_capability_history WHERE $__timeFilter(timestamp) GROUP BY station_id, parameter ORDER BY cpk ASC",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": {
+          "overrides": [
+            {
+              "matcher": { "id": "byName", "options": "cpk" },
+              "properties": [
+                { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "value": 0, "color": "red" }, { "value": 1.0, "color": "yellow" }, { "value": 1.33, "color": "green" }] } },
+                { "id": "custom.displayMode", "value": "color-background" }
+              ]
+            },
+            {
+              "matcher": { "id": "byName", "options": "ooc_signals" },
+              "properties": [
+                { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "value": 0, "color": "green" }, { "value": 1, "color": "red" }] } },
+                { "id": "custom.displayMode", "value": "color-text" }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": 2,
+        "title": "Out-of-Control Parameters (active)",
+        "type": "stat",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 14, "y": 0, "w": 5, "h": 4 },
+        "targets": [
+          {
+            "rawSql": "SELECT countIf(ooc > 0) AS ooc_count FROM (SELECT argMax(out_of_control_signals, timestamp) AS ooc FROM primeev_telemetry.process_capability_history WHERE $__timeFilter(timestamp) GROUP BY station_id, parameter)",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 1, "color": "yellow" },
+                { "value": 5, "color": "red" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Parameters Below Cpk 1.0 (24 h)",
+        "type": "stat",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 19, "y": 0, "w": 5, "h": 4 },
+        "targets": [
+          {
+            "rawSql": "SELECT countIf(cpk < 1.0) AS below_min FROM (SELECT argMax(cpk, timestamp) AS cpk FROM primeev_telemetry.process_capability_history WHERE $__timeFilter(timestamp) GROUP BY station_id, parameter)",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 1, "color": "yellow" },
+                { "value": 3, "color": "red" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Fleet Cpk (avg, last 24 h)",
+        "type": "gauge",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 14, "y": 4, "w": 5, "h": 8 },
+        "targets": [
+          {
+            "rawSql": "SELECT round(avg(cpk), 3) AS fleet_cpk FROM primeev_telemetry.process_capability_history WHERE $__timeFilter(timestamp)",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "min": 0, "max": 2,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 1.0, "color": "yellow" },
+                { "value": 1.33, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Trending Alerts",
+        "type": "stat",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 19, "y": 4, "w": 5, "h": 8 },
+        "targets": [
+          {
+            "rawSql": "SELECT countIf(alert = 1) AS trend_alerts FROM (SELECT argMax(trending_alert, timestamp) AS alert FROM primeev_telemetry.process_capability_history WHERE $__timeFilter(timestamp) GROUP BY station_id, parameter)",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 1, "color": "orange" },
+                { "value": 3, "color": "red" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Cpk Trend — Stamping (STP)",
+        "type": "timeseries",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "rawSql": "SELECT toStartOfDay(timestamp) AS time, parameter, round(avg(cpk), 3) AS cpk FROM primeev_telemetry.process_capability_history WHERE station_id LIKE 'STP%' AND $__timeFilter(timestamp) GROUP BY time, parameter ORDER BY time",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "custom": { "lineWidth": 2 },
+            "thresholds": { "mode": "absolute", "steps": [{ "value": 1.33, "color": "green" }] }
+          }
+        },
+        "options": { "thresholds": { "mode": "line", "show": "line" } },
+        "transformations": [{ "id": "prepareTimeSeries", "options": { "format": "multi" } }]
+      },
+      {
+        "id": 7,
+        "title": "Cpk Trend — Welding (WLD)",
+        "type": "timeseries",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "rawSql": "SELECT toStartOfDay(timestamp) AS time, parameter, round(avg(cpk), 3) AS cpk FROM primeev_telemetry.process_capability_history WHERE station_id LIKE 'WLD%' AND $__timeFilter(timestamp) GROUP BY time, parameter ORDER BY time",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2 } } },
+        "transformations": [{ "id": "prepareTimeSeries", "options": { "format": "multi" } }]
+      },
+      {
+        "id": 8,
+        "title": "Cpk Trend — Assembly (ASM)",
+        "type": "timeseries",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "rawSql": "SELECT toStartOfDay(timestamp) AS time, parameter, round(avg(cpk), 3) AS cpk FROM primeev_telemetry.process_capability_history WHERE station_id LIKE 'ASM%' AND $__timeFilter(timestamp) GROUP BY time, parameter ORDER BY time",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2 } } },
+        "transformations": [{ "id": "prepareTimeSeries", "options": { "format": "multi" } }]
+      }
+    ]
+}

@@ -12,12 +12,14 @@ from src.datagen.generators.base import BaseGenerator
 class MetadataGenerator(BaseGenerator):
     """Generates operators, technicians, crews for Postgres."""
 
-    def __init__(self, days: int = 180, seed: int = 42, start_date: datetime | None = None):
+    def __init__(self, days: int = 180, seed: int = 42, start_date: datetime | None = None) -> None:
+        """Initialize the metadata generator and seed Faker for reproducible names."""
         super().__init__(days, seed, start_date)
         self.fake = Faker()
         Faker.seed(seed)
 
     def generate(self) -> dict[str, list[dict[str, Any]]]:
+        """Generate operators, technicians, crews, and shifts for the simulation window."""
         operators = self._generate_operators()
         technicians = self._generate_technicians()
         crews = self._generate_crews()
@@ -30,6 +32,7 @@ class MetadataGenerator(BaseGenerator):
         }
 
     def _generate_operators(self) -> list[dict[str, Any]]:
+        """Generate 45 operator records with names, shifts, crews, and certifications."""
         operators = []
         certifications_pool = [
             "Forklift", "Crane", "Welding", "Paint", "HV Safety",
@@ -58,6 +61,7 @@ class MetadataGenerator(BaseGenerator):
         return operators
 
     def _generate_technicians(self) -> list[dict[str, Any]]:
+        """Generate 12 technician records with names, shifts, and specializations."""
         technicians = []
         specializations_pool = [
             "Hydraulics", "Robotics", "Electrical", "PLC/Controls",
@@ -78,6 +82,7 @@ class MetadataGenerator(BaseGenerator):
         return technicians
 
     def _generate_crews(self) -> list[dict[str, Any]]:
+        """Generate one crew record per shift crew defined in the SHIFTS constant."""
         crews = []
         for shift_key, shift_config in SHIFTS.items():
             for crew_name in shift_config.crews:
@@ -89,6 +94,7 @@ class MetadataGenerator(BaseGenerator):
         return crews
 
     def _generate_shifts(self) -> list[dict[str, Any]]:
+        """Generate one shift record per shift per day across the simulation window."""
         shifts = []
         for ts, shift_name in self.iter_shift_timestamps():
             shift_config = [s for s in SHIFTS.values() if s.name == shift_name][0]

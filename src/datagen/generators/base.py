@@ -10,7 +10,10 @@ from src.config.constants import SHIFTS, ShiftConfig
 
 
 class BaseGenerator(ABC):
-    def __init__(self, days: int = 180, seed: int = 42, start_date: datetime | None = None):
+    """Abstract base class providing shared timestamp, shift, and RNG utilities for generators."""
+
+    def __init__(self, days: int = 180, seed: int = 42, start_date: datetime | None = None) -> None:
+        """Initialize the generator with a simulation window and reproducible RNG."""
         self.days = days
         self.seed = seed
         self.rng = np.random.default_rng(seed)
@@ -23,6 +26,7 @@ class BaseGenerator(ABC):
         ...
 
     def get_shift(self, dt: datetime) -> ShiftConfig:
+        """Return the ShiftConfig that covers the given datetime."""
         hour = dt.hour
         if 6 <= hour < 14:
             return SHIFTS["day"]
@@ -32,6 +36,7 @@ class BaseGenerator(ABC):
             return SHIFTS["night"]
 
     def get_shift_name(self, dt: datetime) -> str:
+        """Return the human-readable shift name (Day, Swing, or Night) for a datetime."""
         return self.get_shift(dt).name
 
     def iter_timestamps(
@@ -65,6 +70,7 @@ class BaseGenerator(ABC):
         return result
 
     def is_weekend(self, dt: datetime) -> bool:
+        """Return True if the given datetime falls on a Saturday or Sunday."""
         return dt.weekday() >= 5
 
     def production_active(self, dt: datetime) -> bool:

@@ -16,7 +16,8 @@ class QualityGenerator(BaseGenerator):
     process_capability_history for ClickHouse.
     """
 
-    def __init__(self, days: int = 180, seed: int = 42, start_date: datetime | None = None):
+    def __init__(self, days: int = 180, seed: int = 42, start_date: datetime | None = None) -> None:
+        """Initialize quality generator with per-record sequence counters."""
         super().__init__(days, seed, start_date)
         self._dim_seq = 0
         self._smp_seq = 0
@@ -25,6 +26,7 @@ class QualityGenerator(BaseGenerator):
         self._scrap_seq = 0
 
     def generate(self) -> dict[str, list[dict[str, Any]]]:
+        """Generate all quality tables: dimensional, sampling, visual, rework, scrap, SPC, capability."""
         dimensional: list[dict[str, Any]] = []
         sampling: list[dict[str, Any]] = []
         visual: list[dict[str, Any]] = []
@@ -108,6 +110,7 @@ class QualityGenerator(BaseGenerator):
     def _generate_dimensional(
         self, station_id: str, target_fpy: float, date: datetime
     ) -> tuple[dict[str, Any], dict[str, Any] | None, dict[str, Any] | None]:
+        """Generate one dimensional inspection row and an optional rework or scrap row."""
         self._dim_seq += 1
         nominal = float(self.rng.uniform(5.0, 50.0))
         tolerance = nominal * 0.02
@@ -135,6 +138,7 @@ class QualityGenerator(BaseGenerator):
         rework_row = None
         scrap_row = None
         if not passed:
+            event_time = date + timedelta(minutes=int(self.rng.integers(0, 1440)))
             if self.rng.random() < 0.85:  # 85% rework, 15% scrap
                 self._rwk_seq += 1
                 defects = STATION_DEFECTS.get(station_id, ["unknown"])
@@ -147,7 +151,7 @@ class QualityGenerator(BaseGenerator):
                     "rework_time_min": int(self.rng.integers(5, 45)),
                     "re_inspect_result": "pass" if self.rng.random() < 0.9 else "fail",
                     "cost": round(float(self.rng.uniform(20, 200)), 2),
-                    "timestamp": date,
+                    "timestamp": event_time,
                 }
             else:
                 self._scrap_seq += 1
@@ -157,12 +161,13 @@ class QualityGenerator(BaseGenerator):
                     "station_id": station_id,
                     "reason": self.rng.choice(STATION_DEFECTS.get(station_id, ["unknown"])),
                     "cost": round(float(self.rng.uniform(50, 2000)), 2),
-                    "timestamp": date,
+                    "timestamp": event_time,
                 }
 
         return row, rework_row, scrap_row
 
     def _generate_sampling(self, station_id: str, date: datetime) -> dict[str, Any]:
+        """Generate one AQL sampling inspection row for a station and date."""
         self._smp_seq += 1
         aql_type = self.rng.choice(["normal", "tightened", "reduced"])
         aql = AQL_LEVELS[aql_type]
@@ -172,9 +177,14 @@ class QualityGenerator(BaseGenerator):
         defects_found = int(self.rng.poisson(accept_number * 0.6))
         disposition = "accept" if defects_found <= accept_number else "reject"
 
+        # Lot number ties this sampling event to a specific incoming material lot
+        stage = station_id[:3]
+        lot_number = f"LOT-{stage}-{date.strftime('%y%m')}-{self._smp_seq:04d}"
+
         return {
             "insp_id": generate_inspection_id("SMP", self._smp_seq),
             "station_id": station_id,
+            "lot_number": lot_number,
             "lot_size": lot_size,
             "sample_size": sample_size,
             "aql_level": aql["aql"],
@@ -189,6 +199,7 @@ class QualityGenerator(BaseGenerator):
     def _generate_visual_checklist(
         self, station_id: str, date: datetime, unit_idx: int
     ) -> dict[str, Any]:
+        """Generate one visual checklist row for a unit passing through a gate station."""
         self._vis_seq += 1
         checkpoints = STATION_DEFECTS.get(station_id, ["general"])
         results = {}
@@ -250,6 +261,7 @@ class QualityGenerator(BaseGenerator):
     def _generate_capability(
         self, station_id: str, parameter: str, date: datetime
     ) -> dict[str, Any]:
+        """Generate one daily process capability row (Cp, Cpk) for a station parameter."""
         base_cpk = float(self.rng.uniform(1.1, 1.8))
         # Add some drift over time
         day_idx = (date - self.start_date).days

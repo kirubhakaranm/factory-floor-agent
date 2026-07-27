@@ -6,6 +6,8 @@ from enum import Enum
 
 
 class DocumentType(str, Enum):
+    """Enumeration of document types that the agent can generate as PDFs."""
+
     EIGHT_D = "8d_report"
     NCR = "ncr_report"
     WORK_ORDER = "work_order"
@@ -16,6 +18,8 @@ class DocumentType(str, Enum):
 
 @dataclass
 class DocumentMeta:
+    """Common header metadata shared by all generated document types."""
+
     doc_id: str
     doc_type: DocumentType
     title: str
@@ -28,6 +32,8 @@ class DocumentMeta:
 
 @dataclass
 class EightDReport:
+    """Structured data for an 8-Disciplines problem-solving report."""
+
     meta: DocumentMeta
     d1_team: list[str]
     d2_problem: str
@@ -46,6 +52,8 @@ class EightDReport:
 
 @dataclass
 class NcrReport:
+    """Structured data for a Non-Conformance Report against a supplier lot."""
+
     meta: DocumentMeta
     supplier_id: str
     supplier_name: str
@@ -62,6 +70,8 @@ class NcrReport:
 
 @dataclass
 class WorkOrderDoc:
+    """Structured data for a maintenance work order document."""
+
     meta: DocumentMeta
     machine_id: str
     machine_model: str
@@ -79,6 +89,8 @@ class WorkOrderDoc:
 
 @dataclass
 class IncidentReport:
+    """Structured data for an equipment failure or quality incident report."""
+
     meta: DocumentMeta
     incident_type: str  # equipment_failure, quality_event, safety
     station_id: str
@@ -97,6 +109,8 @@ class IncidentReport:
 
 @dataclass
 class PdcaRecord:
+    """Structured data for a Plan-Do-Check-Act continuous improvement record."""
+
     meta: DocumentMeta
     problem: str
     plan_description: str
@@ -118,6 +132,8 @@ class PdcaRecord:
 
 @dataclass
 class MaintenanceNotice:
+    """Structured data for a planned maintenance notice distributed to production supervisors."""
+
     meta: DocumentMeta
     machine_id: str
     machine_model: str

@@ -36,7 +36,7 @@ export default function Sidebar() {
         ))}
       </nav>
       <div className="px-4 py-3 border-t border-gray-700 text-xs text-gray-500">
-        v0.1.0 | Powered by Claude
+        v0.1.0 | Google ADK + Claude
       </div>
     </aside>
   );

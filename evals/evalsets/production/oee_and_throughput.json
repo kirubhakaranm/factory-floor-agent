@@ -1,106 +1,423 @@
 [
   {
     "id": "PR-001",
-    "query": "What's our OEE for the Assembly stage this week?",
+    "query": "What's our OEE for the Assembly stage over the last 7 days?",
     "expected_agent": "production_agent",
-    "expected_tools": ["get_oee_metrics"],
+    "expected_tools": [
+      "get_oee_metrics"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_oee_metrics",
+        "required_args": {
+          "station_id": "ASM-01-PWR"
+        }
+      },
+      {
+        "tool": "get_oee_metrics",
+        "required_args": {
+          "station_id": "ASM-02-INT"
+        }
+      },
+      {
+        "tool": "get_oee_metrics",
+        "required_args": {
+          "station_id": "ASM-03-FNL"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_oee_metrics": {
+        "station_id": "ASM"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "Must break OEE into Availability, Performance, Quality components",
-        "Should compare to 75% target",
-        "Should identify which component is weakest"
-      ]
+      "key_facts": {
+        "domain": [
+          "Must break OEE into Availability, Performance, Quality components",
+          "Should compare to 75% OEE target",
+          "Should identify which OEE component is the weakest driver"
+        ],
+        "data": [
+          "ASM-01-PWR OEE: 81.2% (Availability 94.1%, Performance 89.3%, Quality 96.6%) \u2014 above 75% target",
+          "ASM-02-INT OEE: 80.6% (Availability 94.3%, Performance 90.0%, Quality 94.9%) \u2014 above 75% target",
+          "ASM-03-FNL OEE: 82.2% (Availability 94.1%, Performance 91.7%, Quality 95.3%) \u2014 above 75% target"
+        ]
+      }
     }
   },
   {
     "id": "PR-002",
-    "query": "Compare Day shift vs Night shift OEE for this month",
+    "query": "Compare Day shift vs Night shift OEE for the last 30 days",
     "expected_agent": "production_agent",
-    "expected_tools": ["compare_shifts"],
+    "expected_tools": [
+      "compare_shifts"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "compare_shifts",
+        "required_args": {}
+      }
+    ],
     "ground_truth": {
-      "key_facts": [
-        "Should show per-shift OEE averages",
-        "Night shift typically has slightly lower performance",
-        "Should note statistical significance of difference"
-      ]
+      "key_facts": {
+        "domain": [
+          "Should show per-shift OEE averages for Assembly stage",
+          "Should note which shift performs better and by how much",
+          "Should note statistical significance of any difference"
+        ],
+        "data": [
+          "Day shift average OEE: 82.9% (Availability 93.7%, Performance 92.1%)",
+          "Night shift average OEE: 79.9% (Availability 93.7%, Performance 89.8%)",
+          "Swing shift average OEE: 82.8% (Availability 93.3%, Performance 92.4%)",
+          "Difference between shifts: 3.0 percentage points \u2014 Day shift performs better"
+        ]
+      }
     }
   },
   {
     "id": "PR-003",
-    "query": "How many vehicles did we produce today? Are we on target?",
+    "query": "How many vehicles did we produce today in the last shift? Are we on target?",
     "expected_agent": "production_agent",
-    "expected_tools": ["get_throughput"],
+    "expected_tools": [
+      "get_throughput"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_throughput",
+        "required_args": {}
+      }
+    ],
     "ground_truth": {
-      "key_facts": [
-        "Daily target is 80 vehicles (SD100: 30, SV200: 25, CP300: 25)",
-        "Should report actual vs target by model",
-        "Should report overall completion percentage"
-      ]
+      "key_facts": {
+        "domain": [
+          "Daily target is 80 vehicles total (PE-SD100: 31, PE-SV200: 25, PE-CP300: 24)",
+          "Should report actual vs target by model",
+          "Should report overall completion percentage and flag shortfall if any"
+        ],
+        "data": [
+          "Last shift total (2026-06-29): 82 vehicles produced, 71 passed first inspection",
+          "PrimeEV Compact 300: 24 produced, 21 passed",
+          "PrimeEV SUV 200: 26 produced, 22 passed",
+          "PrimeEV Sedan 100: 32 produced, 28 passed"
+        ]
+      }
     }
   },
   {
     "id": "PR-004",
-    "query": "Trace the production history of VIN PEF-SD100-26-004521",
+    "query": "Trace the production history of VIN PEF-SD100-26-002000",
     "expected_agent": "production_agent",
-    "expected_tools": ["trace_vin_history", "get_vin_quality_summary"],
+    "expected_tools": [
+      "trace_vin_history",
+      "get_vin_quality_summary"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "trace_vin_history",
+        "required_args": {
+          "vin_id": "PEF-SD100-26-002000"
+        }
+      },
+      {
+        "tool": "get_vin_quality_summary",
+        "required_args": {
+          "vin_id": "PEF-SD100-26-002000"
+        }
+      }
+    ],
+    "expected_args": {
+      "trace_vin_history": {
+        "vin_id": "PEF-SD100-26-002000"
+      },
+      "get_vin_quality_summary": {
+        "vin_id": "PEF-SD100-26-002000"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "Should show station-by-station pass/fail results",
-        "Should include rework events if any",
-        "Should report rolled throughput yield for this unit"
-      ]
+      "key_facts": {
+        "domain": [
+          "Should show per-stage quality context for production date 2026-04-06: all 5 stages (STP/WLD/PNT/ASM/QAT) had sampling lots accepted",
+          "Should note VIN is completed and stored at LOT-813 (not shipped)"
+        ],
+        "data": [
+          "VIN PEF-SD100-26-002000: PrimeEV Sedan 100, production_date=2026-04-06, status=completed"
+        ]
+      }
     }
   },
   {
     "id": "PR-005",
     "query": "What components do we need for PE-SV200? Who supplies them?",
     "expected_agent": "production_agent",
-    "expected_tools": ["get_bom_for_model"],
+    "expected_tools": [
+      "get_bom_for_model"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_bom_for_model",
+        "required_args": {
+          "model_id": "PE-SV200"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_bom_for_model": {
+        "model_id": "PE-SV200"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "Should return full BOM for PE-SV200 (SUV)",
-        "Each component should include part_number, description, supplier, station, cost",
-        "SUV-specific components like 100kWh battery pack and panoramic roof reinforcement"
-      ]
+      "key_facts": {
+        "domain": [
+          "Should return full BOM for PE-SV200 (SUV model)",
+          "Each component should include part_number, description, supplier, and station",
+          "Should identify all 5 suppliers and their component categories"
+        ],
+        "data": [
+          "PE-SV200 BOM: 26 components across 7 stations"
+        ]
+      }
     }
   },
   {
     "id": "PR-006",
     "query": "We're planning to produce 50 PE-SD100 units tomorrow. Do we have enough materials?",
     "expected_agent": "production_agent",
-    "expected_tools": ["check_mrp", "get_raw_material_stock"],
+    "expected_tools": [
+      "check_mrp",
+      "get_raw_material_stock"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_raw_material_stock",
+        "required_args": {}
+      },
+      {
+        "tool": "check_mrp",
+        "required_args": {
+          "model_id": "PE-SD100",
+          "quantity": 50
+        }
+      }
+    ],
+    "expected_args": {
+      "check_mrp": {
+        "model_id": "PE-SD100",
+        "quantity": 50
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "Should calculate material requirements for 50 SD100 units",
-        "Should check current inventory levels against requirements",
-        "Should flag any shortages or items below reorder point"
-      ]
+      "key_facts": {
+        "domain": [
+          "Should calculate material requirements for 50 PE-SD100 units",
+          "Should check current inventory levels against requirements",
+          "Should flag any materials below reorder point or that will be depleted"
+        ],
+        "data": [
+          "50 PE-SD100 units require raw materials \u2014 stock status:",
+          "  RAW-ALU-001 (Aluminum sheet 1.5mm 6016-T4): on_hand=1597 kg, status=OK",
+          "  RAW-ALU-002 (Aluminum extrusion 6063-T5): on_hand=949 kg, status=OK",
+          "  RAW-CHM-002 (Basecoat paint \u2014 Pearl White): on_hand=1381 L, status=OK",
+          "  RAW-CHM-003 (Basecoat paint \u2014 Midnight Black): on_hand=1760 L, status=OK",
+          "  RAW-CHM-004 (Clearcoat 2K urethane): on_hand=1668 L, status=OK",
+          "  RAW-ELC-001 (LFP battery cell 3.2V 50Ah): on_hand=10798 pcs, status=OK",
+          "  RAW-ELC-002 (Copper wiring harness 12AWG): on_hand=3131 m, status=OK",
+          "  RAW-FST-001 (M10 flange bolt Grade 10.9): on_hand=46862 pcs, status=OK"
+        ]
+      },
+      "expected_recommendation": "Proceed with 50 units \u00e2\u20ac\u201d all materials sufficient. Raise PO for RAW-STL-001 immediately (1,446 kg on hand, reorder point 2,000 kg)"
     }
   },
   {
     "id": "PR-007",
     "query": "What's the cycle time at Assembly Station 2? Is it the bottleneck?",
     "expected_agent": "production_agent",
-    "expected_tools": ["get_cycle_times", "compare_stations"],
+    "expected_tools": [
+      "get_cycle_times",
+      "compare_stations"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_cycle_times",
+        "required_args": {
+          "station_id": "ASM-02-INT"
+        }
+      },
+      {
+        "tool": "compare_stations",
+        "required_args": {}
+      }
+    ],
+    "expected_args": {
+      "get_cycle_times": {
+        "station_id": "ASM-02-INT"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "ASM-02-INT target cycle time is 240 seconds (longest in assembly)",
-        "Should compare actual vs target",
-        "Should compare across all assembly stations to identify bottleneck"
-      ]
+      "key_facts": {
+        "domain": [
+          "ASM-02-INT ideal cycle time is 240 seconds, the longest in the Assembly stage",
+          "Should compare actual cycle time vs ideal using OEE performance ratio",
+          "Should compare all three Assembly stations to identify the bottleneck"
+        ],
+        "data": [
+          "ASM-01-PWR: ideal cycle time 180.0s",
+          "ASM-02-INT: ideal cycle time 240.0s",
+          "ASM-03-FNL: ideal cycle time 120.0s",
+          "Bottleneck: ASM-02-INT with highest ideal cycle time 240.0s"
+        ]
+      }
     }
   },
   {
     "id": "PR-008",
     "query": "Are any raw materials running low?",
     "expected_agent": "production_agent",
-    "expected_tools": ["get_raw_material_stock"],
+    "expected_tools": [
+      "get_raw_material_stock"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_raw_material_stock",
+        "required_args": {}
+      }
+    ],
     "ground_truth": {
-      "key_facts": [
-        "Should check all raw materials against reorder points",
-        "Items below reorder point should be flagged",
-        "Should include lead time information for procurement urgency"
-      ]
+      "key_facts": {
+        "domain": [
+          "Should check all raw materials against their reorder points",
+          "Items below reorder point should be flagged with urgency",
+          "Should include lead time information so procurement can act"
+        ],
+        "data": [
+          "3 materials below reorder point:",
+          "  RAW-CHM-001 (E-coat solution 200L drum): on_hand=3, reorder_point=5 [LOW]",
+          "  RAW-PLY-002 (EPDM rubber strip): on_hand=434, reorder_point=500 [LOW]",
+          "  RAW-STL-001 (Steel sheet 1.2mm CR): on_hand=1446, reorder_point=2000 [LOW]"
+        ]
+      },
+      "expected_recommendation": "Raise POs immediately for all 3 materials \u00e2\u20ac\u201d RAW-CHM-001 most urgent (only 3 drums, 15-day lead time)"
+    }
+  },
+  {
+    "id": "PR-009",
+    "query": "What does the changeover SOP say for switching between PE-SD100 and PE-SV200 on Assembly Line?",
+    "expected_agent": "production_agent",
+    "expected_tools": [
+      "search_sop"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "search_sop",
+        "required_args": {}
+      }
+    ],
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Should retrieve changeover SOP from SOP-ASM-02 (assembly_interior.md)",
+          "Must include 3 phases: tooling/fixture swap, BOM changeover in MES, first article inspection",
+          "Minimum changeover time target: 45 minutes",
+          "Required sign-offs: Production Supervisor + Quality Engineer",
+          "4 fixture/tooling items must be swapped: seat mounting, dashboard sub-assembly, wiring harness routing guide, headliner clip template"
+        ],
+        "data": []
+      }
+    }
+  },
+  {
+    "id": "PR-010",
+    "query": "Is Assembly Station ASM-01-PWR throughput meeting the daily target over the last 7 days? What does the process spec say the target is?",
+    "expected_agent": "production_agent",
+    "expected_tools": [
+      "get_batch_status",
+      "get_throughput",
+      "search_specification"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_batch_status",
+        "required_args": {
+          "station_id": "ASM-01-PWR"
+        }
+      },
+      {
+        "tool": "search_specification",
+        "required_args": {}
+      }
+    ],
+    "expected_args": {
+      "get_batch_status": {
+        "station_id": "ASM-01-PWR"
+      },
+      "get_throughput": {
+        "station_id": "ASM-01-PWR"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Should retrieve recent batch production data for ASM-01-PWR",
+          "Process spec target per assembly_process_spec.md: 80 units/day, 27 units/shift",
+          "Should calculate actual throughput and compare to spec target",
+          "Should flag if throughput is consistently below target (>5% shortfall = below 76 units/day)"
+        ],
+        "data": [
+          "Daily output (last 7 days from 2026-06-29) \u2014 avg 67.9 vehicles/day:",
+          "  2026-06-29: 82 produced, 71 passed",
+          "  2026-06-27: 19 produced, 9 passed",
+          "  2026-06-26: 71 produced, 61 passed",
+          "  2026-06-25: 78 produced, 67 passed",
+          "  2026-06-24: 80 produced, 69 passed",
+          "  2026-06-23: 71 produced, 59 passed",
+          "  2026-06-22: 74 produced, 63 passed"
+        ]
+      },
+      "expected_recommendation": "Throughput shortfall confirmed \u00e2\u20ac\u201d initiate root cause analysis within 24 hours per ASM-PS-001"
+    }
+  },
+  {
+    "id": "PR-011",
+    "query": "Before we start the PE-SV200 batch tonight, pull the BOM and verify we have enough material in stock.",
+    "expected_agent": "production_agent",
+    "expected_tools": [
+      "get_bom_for_model",
+      "check_mrp"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_bom_for_model",
+        "required_args": {
+          "model_id": "PE-SV200"
+        }
+      },
+      {
+        "tool": "check_mrp",
+        "required_args": {
+          "model_id": "PE-SV200"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_bom_for_model": {
+        "model_id": "PE-SV200"
+      },
+      "check_mrp": {
+        "model_id": "PE-SV200"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Should retrieve the BOM for PE-SV200 (SUV model) \u00e2\u20ac\u201d 26 components",
+          "Should run MRP check to verify raw material stock covers planned batch",
+          "Should flag RAW-STL-001 as below reorder point even though batch can proceed"
+        ],
+        "data": [
+          "PE-SV200 BOM: 26 components, 15 raw materials directly tracked in inventory"
+        ]
+      },
+      "expected_recommendation": "Proceed with PE-SV200 batch \u00e2\u20ac\u201d raw materials sufficient. Raise PO for RAW-STL-001 (1,446 kg on hand, reorder point 2,000 kg, 14-day lead time)"
     }
   }
 ]

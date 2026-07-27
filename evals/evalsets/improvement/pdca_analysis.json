@@ -1,68 +1,271 @@
 [
   {
     "id": "IM-001",
-    "query": "We changed the weld parameters on Station WLD-01-UBD last week. Did it improve quality?",
+    "query": "We changed the weld parameters on Station WLD-01-UBD on 2026-03-01. Compare defect rate and Cpk for the 30 days before vs 30 days after to see if quality improved.",
     "expected_agent": "improvement_agent",
-    "expected_tools": ["get_cpk", "get_defect_rates", "compare_periods", "search_fmea_risks"],
+    "expected_tools": [
+      "get_cpk",
+      "get_defect_rates",
+      "compare_periods",
+      "search_fmea_risks"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_defect_rates",
+        "required_args": {
+          "station_id": "WLD-01-UBD"
+        }
+      },
+      {
+        "tool": "get_cpk",
+        "required_args": {
+          "station_id": "WLD-01-UBD"
+        }
+      },
+      {
+        "tool": "compare_periods",
+        "required_args": {}
+      },
+      {
+        "tool": "search_fmea_risks",
+        "required_args": {}
+      }
+    ],
+    "expected_args": {
+      "get_defect_rates": {
+        "station_id": "WLD-01-UBD"
+      },
+      "get_cpk": {
+        "station_id": "WLD-01-UBD"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "Must compare metrics BEFORE vs AFTER the change",
-        "Key metrics: defect rate, Cpk for nugget diameter, rework rate",
-        "Should reference relevant FMEA item",
-        "Should recommend: STANDARDIZE, MODIFY, or REVERT based on data"
-      ]
+      "key_facts": {
+        "domain": [
+          "Must compare metrics BEFORE (Jan-30 to Feb-28) vs AFTER (Mar-01 to Mar-31) the parameter change on 2026-03-01",
+          "Key metrics: rework rate per day, Cpk for nugget_diameter, avg rework time",
+          "Should reference relevant FMEA item for weld porosity / incomplete fusion risk",
+          "Should recommend: STANDARDIZE, MODIFY, or REVERT based on data"
+        ],
+        "data": [
+          "Change date: 2026-03-01 | Before: 2026-01-30\u20132026-02-28 | After: 2026-03-01\u20132026-03-31",
+          "nugget_diameter Cpk before: 1.409 \u2192 after: 1.487 (improved)",
+          "WLD-01-UBD defect rate before: 6.15% \u2192 after: 5.72%"
+        ]
+      },
+      "expected_recommendation": "STANDARDIZE the new weld parameters \u00e2\u20ac\u201d both rework rate and Cpk improved. Monitor weld spatter which increased slightly."
     }
   },
   {
     "id": "IM-002",
-    "query": "We increased the PM frequency on Press 1 from 500 to 350 hours two months ago. Has reliability improved?",
+    "query": "We increased the PM frequency on Press 1 (STP-01-PRS-HYP01) from 500 to 350 hours on 2026-02-01. Compare MTBF and MTTR for the 30 days before vs 30 days after to see if reliability improved.",
     "expected_agent": "improvement_agent",
-    "expected_tools": ["get_mtbf_mttr", "compare_periods"],
+    "expected_tools": [
+      "get_mtbf_mttr",
+      "compare_periods"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_mtbf_mttr",
+        "required_args": {
+          "machine_id": "STP-01-PRS-HYP01"
+        }
+      },
+      {
+        "tool": "compare_periods",
+        "required_args": {}
+      }
+    ],
+    "expected_args": {
+      "get_mtbf_mttr": {
+        "machine_id": "STP-01-PRS-HYP01"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "Should compare MTBF and MTTR before vs after the PM interval change",
-        "More frequent PM should increase MTBF and decrease MTTR",
-        "Should also check for side effects: cost impact, production time lost to PM"
-      ]
+      "key_facts": {
+        "domain": [
+          "Should compare MTBF and MTTR before (Jan-01\u00e2\u20ac\u201cJan-31) vs after (Feb-01\u00e2\u20ac\u201cMar-03) the 2026-02-01 PM interval change",
+          "More frequent PM should decrease MTTR (faster repairs) and increase availability",
+          "Should also report side effects: planned downtime increase and PM cost impact"
+        ],
+        "data": [
+          "Change date: 2026-02-01 | Before: Jan | After: Feb\u2013Mar",
+          "MTBF before: 744.0h \u2192 after: 609.6h",
+          "MTTR before: 0.96h \u2192 after: 0.48h",
+          "Failures before: 2 \u2192 after: 7"
+        ]
+      },
+      "expected_recommendation": "STANDARDIZE the 350h PM interval \u00e2\u20ac\u201d MTTR improved 86%, availability 99.77% \u00e2\u2020\u2019 99.97%, total maintenance cost down 52%. Trade-off: more planned PM events but each is shorter and lower cost."
     }
   },
   {
     "id": "IM-003",
-    "query": "Our paint booth temperature control was upgraded 3 weeks ago. Did it reduce orange peel defects?",
+    "query": "Our paint booth temperature control at PNT-02-PRM was upgraded on 2026-03-01. Compare orange peel defect rate for the 30 days before vs 30 days after to see if it improved.",
     "expected_agent": "improvement_agent",
-    "expected_tools": ["get_defect_rates", "get_rework_history", "compare_periods", "search_past_issues"],
+    "expected_tools": [
+      "get_defect_rates",
+      "get_rework_history",
+      "compare_periods",
+      "search_past_issues"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_defect_rates",
+        "required_args": {
+          "station_id": "PNT-02-PRM"
+        }
+      },
+      {
+        "tool": "get_rework_history",
+        "required_args": {
+          "station_id": "PNT-02-PRM"
+        }
+      },
+      {
+        "tool": "compare_periods",
+        "required_args": {}
+      },
+      {
+        "tool": "search_past_issues",
+        "required_args": {}
+      }
+    ],
+    "expected_args": {
+      "get_defect_rates": {
+        "station_id": "PNT-02-PRM"
+      },
+      "get_rework_history": {
+        "station_id": "PNT-02-PRM"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "Should compare orange peel defect rate before vs after",
-        "Reference ISSUE-2025-002 (paint booth temperature excursion)",
-        "Should check if rework rate at PNT stations decreased"
-      ]
+      "key_facts": {
+        "domain": [
+          "Should compare orange peel defect rate before (Jan-30\u00e2\u20ac\u201cFeb-28) vs after (Mar-01\u00e2\u20ac\u201cMar-31) the 2026-03-01 upgrade",
+          "Reference ISSUE-2025-002 (paint booth temperature excursion root cause) from troubleshooting_db",
+          "Should flag that fisheye defects increased after upgrade \u00e2\u20ac\u201d possible side effect",
+          "Should check if overall rework rate at PNT-02-PRM decreased after upgrade"
+        ],
+        "data": [
+          "Change date: 2026-03-01 | Before: Jan-30\u2013Feb-28 | After: Mar-01\u2013Mar-31",
+          "PNT-02-PRM defect rate before: 8.48% \u2192 after: 6.57% (improved)"
+        ]
+      },
+      "expected_recommendation": "MODIFY \u00e2\u20ac\u201d temperature upgrade improved overall rework 22.5% and solvent pop 56%, but orange peel only improved 14% (target not met). Fisheye increased 55% \u00e2\u20ac\u201d investigate silicone contamination or atomization interaction with new temperature profile."
     }
   },
   {
     "id": "IM-004",
     "query": "What past case studies do we have on paint quality improvements?",
     "expected_agent": "improvement_agent",
-    "expected_tools": ["search_case_study", "search_past_issues"],
+    "expected_tools": [
+      "search_case_study",
+      "search_past_issues"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "search_case_study",
+        "required_args": {}
+      },
+      {
+        "tool": "search_past_issues",
+        "required_args": {}
+      }
+    ],
     "ground_truth": {
-      "key_facts": [
-        "Should find the 5-Why analysis on paint adhesion failure",
-        "Should find ISSUE-2025-002 on orange peel temperature excursion",
-        "Should summarize findings and lessons learned"
-      ]
+      "key_facts": {
+        "domain": [
+          "Should retrieve 5why_paint_adhesion.md from case_studies",
+          "Should retrieve ISSUE-2025-002.md from troubleshooting_db",
+          "Should summarize root cause, corrective actions, and lessons learned from each"
+        ],
+        "data": [
+          "Case study 1 \u00e2\u20ac\u201d 5-Why paint adhesion failure (2025-09-18): 13 PE-SV200 vehicles failed adhesion crosshatch test",
+          "Root cause: silicone contamination from adhesive tape backing placed on roof panel \u00e2\u20ac\u201d unapproved operator workaround due to missing waste bin",
+          "Fix: waste bin added, work instruction updated, water break test added before primer for SV200. Rework cost $15,600",
+          "Lesson: workstation layout review required for all new model/option introductions (PDCA-2025-012)",
+          "Case study 2 \u00e2\u20ac\u201d ISSUE-2025-002 orange peel spike (2025-04-22): 31 of 78 vehicles affected in 1 shift at PNT-02-PRM",
+          "Root cause: HVAC chiller tripped, booth temperature rose to 27\u00c2\u00b0C (spec 21\u00e2\u20ac\u201c25\u00c2\u00b0C) \u00e2\u20ac\u201d faster solvent evaporation caused poor flow-out",
+          "Fix: HVAC repaired, operator HMI alarm added, auto-pause at 26\u00c2\u00b0C, PM frequency increased to monthly. Rework cost $18,600",
+          "Lesson: booth temperature is the most critical paint quality parameter \u00e2\u20ac\u201d 2\u00c2\u00b0C rise sufficient to cause widespread orange peel"
+        ]
+      }
     }
   },
   {
     "id": "IM-005",
-    "query": "Has overall OEE improved this quarter compared to last?",
+    "query": "Compare OEE for January 2026 vs March 2026 across all 5 production stages (Stamping, Welding, Paint, Assembly, Quality). Break it down by stage and OEE component.",
     "expected_agent": "improvement_agent",
-    "expected_tools": ["get_oee_metrics", "compare_periods"],
+    "expected_tools": [
+      "get_oee_metrics",
+      "compare_periods"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_oee_metrics",
+        "required_args": {}
+      },
+      {
+        "tool": "compare_periods",
+        "required_args": {}
+      }
+    ],
     "ground_truth": {
-      "key_facts": [
-        "Should compare Q1 vs Q2 OEE across all stations",
-        "Should break down which component (A/P/Q) improved or declined",
-        "Should identify which stages contributed most to change"
-      ]
+      "key_facts": {
+        "domain": [
+          "Should compare January vs March 2026 OEE across all 5 stages",
+          "Should break down Availability, Performance, Quality components for each stage",
+          "Should identify which stage improved most and which declined",
+          "All stages should be above the 75% OEE target"
+        ],
+        "data": [
+          "WLD improved most: WLD-01-UBD: 80.6% \u2192 81.5% (+0.9pp)",
+          "WLD-01-UBD: 80.6% \u2192 81.5% (\u0394+0.9pp) Avail \u0394+0.3pp Perf \u0394+0.7pp",
+          "WLD-02-SDP: 81.4% \u2192 82.0% (\u0394+0.6pp) Avail \u0394+0.4pp Perf \u0394+0.3pp",
+          "WLD-03-RCL: 81.7% \u2192 82.0% (\u0394+0.3pp) Avail \u0394+0.1pp Perf \u0394+0.4pp"
+        ]
+      }
+    }
+  },
+  {
+    "id": "IM-006",
+    "query": "What is the trend in welding defect rate at WLD-01-UBD over the last 90 days? Is it improving?",
+    "expected_agent": "improvement_agent",
+    "expected_tools": [
+      "get_defect_rates",
+      "compare_periods"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_defect_rates",
+        "required_args": {
+          "station_id": "WLD-01-UBD"
+        }
+      },
+      {
+        "tool": "compare_periods",
+        "required_args": {}
+      }
+    ],
+    "expected_args": {
+      "get_defect_rates": {
+        "station_id": "WLD-01-UBD"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Should retrieve defect rate data for WLD-01-UBD over the last 90 days",
+          "Should compare 30-day windows to identify trend direction",
+          "Should report dominant defect types (porosity, incomplete fusion, spatter)",
+          "Trend should be classified as improving, stable, or worsening with supporting data"
+        ],
+        "data": [
+          "WLD-01-UBD overall defect rate: 5.4% (FPY: 94.6%)",
+          "Total inspections at WLD-01-UBD: 9978",
+          "Defect rate trend over last 90 days: stable"
+        ]
+      }
     }
   }
 ]

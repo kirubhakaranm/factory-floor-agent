@@ -15,6 +15,7 @@ logger = get_logger("primeev.api")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """Configure logging on startup and log shutdown on teardown."""
     setup_logging()
     logger.info("PrimeEV Factory Floor Agent starting", version="0.1.0")
     yield
@@ -22,6 +23,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 def create_app() -> FastAPI:
+    """Build and configure the FastAPI application with all routers and middleware."""
     application = FastAPI(
         title="PrimeEV Factory Floor Agent",
         description="AI agents for manufacturing engineers — diagnose, decide, and act",
@@ -38,14 +40,18 @@ def create_app() -> FastAPI:
     )
 
     # Register routes
+    from src.api.routes.analytics import router as analytics_router
     from src.api.routes.chat import router as chat_router
+    from src.api.routes.docs import router as docs_router
     from src.api.routes.factory import router as factory_router
     from src.api.routes.alerts import router as alerts_router
     from src.api.routes.sessions import router as sessions_router
     from src.api.routes.health import router as health_router
     from src.monitoring.metrics import router as metrics_router
 
+    application.include_router(analytics_router)
     application.include_router(chat_router)
+    application.include_router(docs_router)
     application.include_router(factory_router)
     application.include_router(alerts_router)
     application.include_router(sessions_router)
@@ -54,6 +60,7 @@ def create_app() -> FastAPI:
 
     @application.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        """Return a JSON 500 response for any unhandled exception."""
         logger.error("Unhandled exception", error=str(exc), path=request.url.path)
         return JSONResponse(
             status_code=500,

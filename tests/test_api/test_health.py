@@ -1,4 +1,4 @@
-"""Smoke tests for API endpoints."""
+"""Smoke tests for API health, factory, alerts, sessions, and metrics endpoints."""
 
 from fastapi.testclient import TestClient
 
@@ -8,6 +8,7 @@ client = TestClient(app)
 
 
 def test_health_check() -> None:
+    """GET /api/health returns 200 with status and per-dependency check keys."""
     response = client.get("/api/health")
     assert response.status_code == 200
     data = response.json()
@@ -17,6 +18,7 @@ def test_health_check() -> None:
 
 
 def test_factory_status() -> None:
+    """GET /api/factory/status returns all 15 stations with machine count and shift."""
     response = client.get("/api/factory/status")
     assert response.status_code == 200
     data = response.json()
@@ -26,6 +28,7 @@ def test_factory_status() -> None:
 
 
 def test_station_machines() -> None:
+    """GET /api/factory/stations/{id}/machines returns machines belonging to that station."""
     response = client.get("/api/factory/stations/STP-01-PRS/machines")
     assert response.status_code == 200
     machines = response.json()
@@ -34,6 +37,7 @@ def test_station_machines() -> None:
 
 
 def test_alerts_empty() -> None:
+    """GET /api/alerts returns an AlertList with total=0 when DB is unavailable."""
     response = client.get("/api/alerts")
     assert response.status_code == 200
     data = response.json()
@@ -41,12 +45,14 @@ def test_alerts_empty() -> None:
 
 
 def test_sessions_list() -> None:
+    """GET /api/sessions returns a list (may be empty when DB is unavailable)."""
     response = client.get("/api/sessions")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 
 def test_create_session() -> None:
+    """POST /api/sessions returns a response containing a session_id field."""
     response = client.post("/api/sessions")
     assert response.status_code == 200
     data = response.json()
@@ -54,5 +60,6 @@ def test_create_session() -> None:
 
 
 def test_metrics_endpoint() -> None:
+    """GET /metrics returns 200 (Prometheus scrape endpoint)."""
     response = client.get("/metrics")
     assert response.status_code == 200

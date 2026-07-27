@@ -1,0 +1,161 @@
+[
+  {
+    "id": "MT-001",
+    "category": "multi_turn",
+    "description": "OEE drill-down \u00e2\u20ac\u201d agent must carry WLD stage context from turn 1 to answer turn 2 without re-asking",
+    "conversation_history": [
+      {
+        "role": "user",
+        "content": "What's the OEE for the WLD stage in January 2026?"
+      },
+      {
+        "role": "assistant",
+        "content": "WLD stage OEE in January 2026: WLD-01-UBD=80.77%, WLD-02-SDP=81.43%, WLD-03-RCL=80.46%. Stage average: 80.89%. Component breakdown \u00e2\u20ac\u201d Availability: 92.85%\u00e2\u20ac\u201c93.59%; Performance: 90.25%\u00e2\u20ac\u201c91.52%; Quality: 94.64%\u00e2\u20ac\u201c95.81%. Performance is the weakest component across all three stations."
+      }
+    ],
+    "query": "Which of the three WLD stations has the weakest Performance component and what's likely causing it?",
+    "expected_agent": "improvement_agent",
+    "expected_tools": [
+      "get_oee_metrics",
+      "get_failure_history"
+    ],
+    "expected_context_keys": [
+      "station_id",
+      "stage"
+    ],
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Agent must NOT ask which stage or time period \u00e2\u20ac\u201d that context was established in turn 1",
+          "Agent must identify WLD-03-RCL as having the lowest Performance (90.25%) in January",
+          "Agent should retrieve failure or cycle-time events at WLD-03-RCL to explain the Performance gap",
+          "Agent must reference the WLD stage context carried from the prior turn"
+        ],
+        "data": [
+          "WLD-01-UBD Jan: OEE=80.65%, Avail=93.56%, Perf=91.02%, Qual=94.68%",
+          "WLD-02-SDP Jan: OEE=81.24%, Avail=93.0%, Perf=91.08%, Qual=95.89%",
+          "WLD-03-RCL Jan: OEE=81.37%, Avail=93.37%, Perf=91.0%, Qual=95.75%"
+        ]
+      },
+      "expected_behavior": "Correctly identifies WLD-03-RCL as having the weakest Performance (90.25%) without re-asking for context \u00e2\u20ac\u201d retrieves failure/cycle-time data to explain why"
+    }
+  },
+  {
+    "id": "MT-002",
+    "category": "multi_turn",
+    "description": "Failure diagnosis \u00e2\u2020\u2019 work order \u00e2\u20ac\u201d agent must carry machine_id and failure details from turn 1",
+    "conversation_history": [
+      {
+        "role": "user",
+        "content": "What failed on STP-01-PRS-HYP01 on 2026-02-18?"
+      },
+      {
+        "role": "assistant",
+        "content": "Failure FLR-STP01-2602-002 on 2026-02-18: cylinder seal failure (Tool Wear Failure). Component: cylinder seal. Severity: minor. Downtime: 14 minutes. Total cost: $1,410.06 (parts $890.23 + labor $19.83 + lost production $500.00). Root cause: excessive wear on cylinder seal exceeded service life threshold. Corrective action: seal replaced. Preventive action: increase inspection frequency for cylinder seal."
+      }
+    ],
+    "query": "Create a preventive work order to inspect the cylinder seals before the next potential failure.",
+    "expected_agent": "action_agent",
+    "expected_tools": [
+      "create_work_order"
+    ],
+    "expected_context_keys": [
+      "machine_id",
+      "failure_id"
+    ],
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Agent must NOT ask which machine \u00e2\u20ac\u201d STP-01-PRS-HYP01 was established in turn 1",
+          "Work order must reference the cylinder seal as the component to inspect",
+          "Work order must reference failure FLR-STP01-2602-002 as the triggering event",
+          "Work order type should be preventive \u00e2\u20ac\u201d as explicitly requested",
+          "Agent must carry machine_id=STP-01-PRS-HYP01 into create_work_order args"
+        ],
+        "data": [
+          "Machine: STP-01-PRS-HYP01 \u2014 carried from turn 1"
+        ]
+      },
+      "expected_behavior": "Creates preventive work order for STP-01-PRS-HYP01 cylinder seal inspection \u00e2\u20ac\u201d machine ID and failure context carried from turn 1 without re-asking"
+    }
+  },
+  {
+    "id": "MT-003",
+    "category": "multi_turn",
+    "description": "PDCA analysis \u00e2\u2020\u2019 PDCA record creation \u00e2\u20ac\u201d agent must carry station, change date, and recommendation from turn 1",
+    "conversation_history": [
+      {
+        "role": "user",
+        "content": "Evaluate whether the weld parameter change on WLD-01-UBD on 2026-03-01 improved quality."
+      },
+      {
+        "role": "assistant",
+        "content": "Before (Jan-30 to Feb-28): Cpk=1.404, rework rate 3.10/day, 93 total reworks. After (Mar-01 to Mar-31): Cpk=1.527 (+8.8%), rework rate 2.61/day (-16%), 81 total reworks. Incomplete fusion reduced 36% (28\u00e2\u2020\u201918 events). Recommendation: STANDARDIZE \u00e2\u20ac\u201d both Cpk and rework rate improved. Monitor weld spatter which increased slightly (19\u00e2\u2020\u201922)."
+      }
+    ],
+    "query": "Good. Now create the PDCA record to document this as a standardized improvement.",
+    "expected_agent": "action_agent",
+    "expected_tools": [
+      "create_pdca_record"
+    ],
+    "expected_context_keys": [
+      "station_id",
+      "change_date",
+      "recommendation"
+    ],
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Agent must NOT ask which station or change date \u00e2\u20ac\u201d WLD-01-UBD and 2026-03-01 were established in turn 1",
+          "PDCA record must reflect STANDARDIZE decision from the turn 1 analysis",
+          "PDCA record must include the before/after metrics from the analysis (Cpk, rework rate)",
+          "PDCA record must note the weld spatter side effect to monitor",
+          "Agent must reference PDCA-2025-012.md template format from RAG"
+        ],
+        "data": [
+          "Station: WLD-01-UBD \u2014 carried from turn 1"
+        ]
+      },
+      "expected_behavior": "Creates PDCA record with STANDARDIZE decision using all context from turn 1 \u00e2\u20ac\u201d does not re-run the analysis or ask for station/date again"
+    }
+  },
+  {
+    "id": "MT-004",
+    "category": "multi_turn",
+    "description": "Supplier quality review \u00e2\u2020\u2019 NCR \u00e2\u20ac\u201d agent must carry supplier, lot, and scorecard context from turn 1 to compose a meaningful NCR without re-fetching",
+    "conversation_history": [
+      {
+        "role": "user",
+        "content": "How has SteelWorks been performing in Q1 2026? Check both the scorecard and receiving inspections."
+      },
+      {
+        "role": "assistant",
+        "content": "SteelWorks (SUP-MTL01) Q1 2026 scorecard: Jan=80.1, Feb=78.2, Mar=82.8. Receiving inspections: 63 lots total (Jan=26, Feb=17, Mar=20) \u00e2\u20ac\u201d 2 rejections: SUP-MTL01-LOT-2602-700 (2026-02-13, reject) and SUP-MTL01-LOT-2603-355 (2026-03-02, reject). Reject rate 3.2% (2/63). Note: post-Q1 scorecard shows sharp decline \u00e2\u20ac\u201d Apr=60.1, May=70.9, Jun=51.6. Trend is worsening."
+      }
+    ],
+    "query": "Two rejections in Q1 and the scorecard is in freefall since April. Raise an NCR for the most recent failing lot.",
+    "expected_agent": "action_agent",
+    "expected_tools": [
+      "create_supplier_ncr"
+    ],
+    "expected_context_keys": [
+      "supplier_id",
+      "lot_number"
+    ],
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Agent must NOT re-fetch receiving inspections or scorecard \u00e2\u20ac\u201d all data was established in turn 1",
+          "Most recent failing lot is SUP-MTL01-LOT-2603-355 (2026-03-02, reject) \u00e2\u20ac\u201d established in turn 1",
+          "NCR must be raised against SUP-MTL01 (SteelWorks Inc.)",
+          "NCR issue field must reference both the lot rejection and the declining scorecard trend as context",
+          "Agent should call create_supplier_ncr directly without calling get_receiving_inspections or get_supplier_scorecard again"
+        ],
+        "data": [
+          "Supplier: SUP-MTL01 (SteelWorks Inc.) \u2014 carried from turn 1"
+        ]
+      },
+      "expected_behavior": "Creates NCR for SUP-MTL01-LOT-2603-355 with issue description grounded in scorecard decline and Q1 rejection history \u00e2\u20ac\u201d does not re-fetch supplier data already retrieved in turn 1"
+    }
+  }
+]

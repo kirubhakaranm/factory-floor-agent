@@ -5,36 +5,206 @@ on:
     branches: [main]
 
 jobs:
-  eval:
+  # ── Tier 1: offline framework tests — always run, no API key required ─────
+  framework:
+    name: Eval Framework Tests (offline)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
+      - run: pip install ".[dev]"
+      - name: Run eval framework tests (no live agent)
+        run: pytest evals/test_agents.py -v --tb=short -k "not test_live_eval"
+
+  # ── Tier 3: live agent eval against real services — requires ANTHROPIC_API_KEY
+  live-eval:
+    name: Live Agent Eval (--live --llm-judge)
+    runs-on: ubuntu-latest
+    # Only run when the secret is available (skips on forks without the secret)
+    if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+    needs: framework
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: primeev_factory
+          POSTGRES_USER: primeev
+          POSTGRES_PASSWORD: primeev_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U primeev -d primeev_factory"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      clickhouse:
+        image: clickhouse/clickhouse-server:24.3-alpine
+        ports:
+          - 8123:8123
+          - 9000:9000
+        options: >-
+          --health-cmd "wget -qO- http://localhost:8123/ping || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
       - run: pip install ".[dev]"
 
-      # Run eval framework tests (offline — no LLM calls)
-      - name: Run eval framework tests
-        run: pytest evals/ -v --tb=short
+      # Seed databases with 30 days of deterministic synthetic data
+      - name: Create DB schemas
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: primeev_factory
+          POSTGRES_USER: primeev
+          POSTGRES_PASSWORD: primeev_dev
+          CLICKHOUSE_HOST: localhost
+          CLICKHOUSE_PORT: 8123
+        run: |
+          python -m src.db.postgres.migrations.env --create-all
+          python -c "
+          import clickhouse_connect
+          client = clickhouse_connect.get_client(host='localhost', port=8123)
+          with open('infra/clickhouse/init.sql') as f:
+              for stmt in f.read().split(';'):
+                  stmt = stmt.strip()
+                  if stmt:
+                      client.command(stmt)
+          print('ClickHouse schema created')
+          "
 
-      # For live evals (uncomment when ready):
-      # - name: Run live agent evals
-      #   env:
-      #     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      #   run: pytest evals/ -v --live --tb=short
+      - name: Seed data (30 days, seed=42)
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: primeev_factory
+          POSTGRES_USER: primeev
+          POSTGRES_PASSWORD: primeev_dev
+          CLICKHOUSE_HOST: localhost
+          CLICKHOUSE_PORT: 8123
+        run: python -m src.datagen generate --days 30 --seed 42
 
-      # Post results as PR comment (uncomment when ready):
-      # - name: Post eval results
-      #   if: always()
-      #   uses: actions/github-script@v7
-      #   with:
-      #     script: |
-      #       const fs = require('fs');
-      #       const report = fs.readFileSync('eval_report.md', 'utf8');
-      #       github.rest.issues.createComment({
-      #         owner: context.repo.owner,
-      #         repo: context.repo.repo,
-      #         issue_number: context.issue.number,
-      #         body: report,
-      #       });
+      - name: Populate ground truth in eval cases
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: primeev_factory
+          POSTGRES_USER: primeev
+          POSTGRES_PASSWORD: primeev_dev
+          CLICKHOUSE_HOST: localhost
+          CLICKHOUSE_PORT: 8123
+        run: python -m evals.gt_generator
+
+      # Index RAG documents (needed by quality/action agents)
+      - name: Index RAG corpus
+        run: python -m src.rag.embedder --index-all || echo "RAG indexing skipped (optional)"
+
+      - name: Run live agent eval (Tier 1 + Tier 2)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AGENT_MODEL: anthropic/claude-haiku-4-5
+          EVAL_RUN_NAME: pr-${{ github.event.pull_request.number }}
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: primeev_factory
+          POSTGRES_USER: primeev
+          POSTGRES_PASSWORD: primeev_dev
+          CLICKHOUSE_HOST: localhost
+          CLICKHOUSE_PORT: 8123
+        # --tb=no keeps output concise; per-case failures are in the report
+        # --exit-code-only: allow posting the report even when thresholds fail
+        run: |
+          pytest evals/test_agents.py::test_live_eval \
+            -v --tb=short --live --llm-judge \
+            -p no:xdist \
+            || echo "::warning::Some eval cases did not meet thresholds — see report"
+
+      - name: Upload eval results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-results-pr-${{ github.event.pull_request.number }}
+          path: |
+            eval_report.md
+            evals/.eval_runs/pr-${{ github.event.pull_request.number }}/
+          retention-days: 30
+
+      - name: Post eval report as PR comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const reportPath = 'eval_report.md';
+            if (!fs.existsSync(reportPath)) {
+              console.log('No eval_report.md found — skipping PR comment');
+              return;
+            }
+            const report = fs.readFileSync(reportPath, 'utf8');
+
+            // Find and update an existing bot comment rather than creating new ones
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('Agent Evaluation Report')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: report,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: report,
+              });
+            }
+
+      - name: Fail if thresholds not met
+        if: always()
+        env:
+          EVAL_RUN_NAME: pr-${{ github.event.pull_request.number }}
+        run: |
+          python - <<'EOF'
+          import json
+          from pathlib import Path
+          from evals.runners.eval_runner import aggregate_results
+          from evals.runners.ci_reporter import check_thresholds
+
+          results_dir = Path(f"evals/.eval_runs/pr-${{ github.event.pull_request.number }}")
+          result_files = list(results_dir.glob("*.json"))
+          if not result_files:
+              print("No result files found — skipping threshold check")
+              exit(0)
+
+          results = [json.loads(f.read_text()) for f in sorted(result_files)]
+          summary = aggregate_results(results)
+          passed, failures = check_thresholds(summary, llm_judge_run=True)
+
+          if not passed:
+              print("THRESHOLD FAILURES:")
+              for f in failures:
+                  print(f"  FAIL {f}")
+              exit(1)
+          print(f"All thresholds passed across {len(results)} eval cases.")
+          EOF

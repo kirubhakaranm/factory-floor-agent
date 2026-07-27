@@ -1,48 +1,119 @@
 {
-  "dashboard": {
-    "title": "PrimeEV Factory Overview",
+  "uid": "primeev-factory",
+    "title": "PrimeEV — Factory Overview",
     "tags": ["primeev", "factory"],
+    "schemaVersion": 36,
+    "version": 1,
+    "refresh": "1m",
+    "time": { "from": "now-200d", "to": "now" },
     "panels": [
       {
-        "title": "OEE by Station (Last 24h)",
+        "id": 1,
+        "title": "OEE by Station — Last 24 h",
         "type": "barchart",
-        "datasource": "ClickHouse",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 0, "y": 0, "w": 16, "h": 10 },
         "targets": [
           {
-            "rawSql": "SELECT station_id, avg(oee) as avg_oee FROM primeev_telemetry.oee_metrics WHERE timestamp >= now() - INTERVAL 1 DAY GROUP BY station_id ORDER BY station_id"
+            "rawSql": "SELECT station_id, round(avg(oee) * 100, 1) AS oee_pct FROM primeev_telemetry.oee_metrics WHERE $__timeFilter(timestamp) GROUP BY station_id ORDER BY station_id",
+            "format": "table"
           }
-        ]
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0, "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 60, "color": "yellow" },
+                { "value": 75, "color": "green" }
+              ]
+            },
+            "custom": { "fillOpacity": 80 }
+          }
+        }
       },
       {
-        "title": "Sensor Temperature Heatmap",
+        "id": 2,
+        "title": "Factory OEE (avg, last 24 h)",
+        "type": "gauge",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 16, "y": 0, "w": 4, "h": 10 },
+        "targets": [
+          {
+            "rawSql": "SELECT round(avg(oee) * 100, 1) AS oee_pct FROM primeev_telemetry.oee_metrics WHERE $__timeFilter(timestamp)",
+            "format": "table"
+          }
+        ],
+        "options": {
+          "reduceOptions": { "calcs": ["lastNotNull"] }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0, "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 60, "color": "yellow" },
+                { "value": 75, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Temperature Heatmap (last 6 h)",
         "type": "heatmap",
-        "datasource": "ClickHouse",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 0, "y": 10, "w": 12, "h": 8 },
         "targets": [
           {
-            "rawSql": "SELECT toStartOfHour(timestamp) as time, station_id, avg(value) as avg_temp FROM primeev_telemetry.sensor_readings WHERE sensor_type = 'TMP' AND timestamp >= now() - INTERVAL 24 HOUR GROUP BY time, station_id ORDER BY time"
+            "rawSql": "SELECT toStartOfHour(timestamp) AS time, station_id, round(avg(value), 1) AS avg_temp FROM primeev_telemetry.sensor_readings WHERE sensor_type = 'TMP' AND $__timeFilter(timestamp) GROUP BY time, station_id ORDER BY time",
+            "format": "table"
           }
-        ]
+        ],
+        "fieldConfig": { "defaults": { "unit": "celsius" } }
       },
       {
-        "title": "Active Alerts",
-        "type": "stat",
-        "datasource": "Prometheus",
-        "targets": [
-          {
-            "expr": "sum(increase(agent_tool_calls_total{tool_name='get_active_alerts'}[1h]))"
-          }
-        ]
-      },
-      {
-        "title": "Daily Production Output",
+        "id": 5,
+        "title": "Energy Consumption — kW by Station",
         "type": "timeseries",
-        "datasource": "ClickHouse",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 12, "y": 10, "w": 12, "h": 8 },
         "targets": [
           {
-            "rawSql": "SELECT toDate(timestamp) as date, sum(oee) as daily_oee FROM primeev_telemetry.oee_metrics GROUP BY date ORDER BY date"
+            "rawSql": "SELECT toStartOfHour(timestamp) AS time, station_id, round(avg(power_kw), 1) AS avg_kw FROM primeev_telemetry.energy_consumption WHERE $__timeFilter(timestamp) GROUP BY time, station_id ORDER BY time",
+            "format": "table"
           }
-        ]
+        ],
+        "fieldConfig": { "defaults": { "unit": "watt", "custom": { "lineWidth": 1 } } },
+        "transformations": [{ "id": "prepareTimeSeries", "options": { "format": "multi" } }]
+      },
+      {
+        "id": 6,
+        "title": "OEE Trend — Last 7 Days",
+        "type": "timeseries",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "gridPos": { "x": 0, "y": 18, "w": 24, "h": 8 },
+        "targets": [
+          {
+            "rawSql": "SELECT toStartOfDay(timestamp) AS time, station_id, round(avg(oee) * 100, 1) AS oee_pct FROM primeev_telemetry.oee_metrics WHERE $__timeFilter(timestamp) GROUP BY time, station_id ORDER BY time",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0, "max": 100,
+            "custom": { "lineWidth": 2, "fillOpacity": 5 }
+          }
+        },
+        "transformations": [{ "id": "prepareTimeSeries", "options": { "format": "multi" } }]
       }
     ]
-  }
 }

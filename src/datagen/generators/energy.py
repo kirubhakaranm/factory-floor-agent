@@ -18,10 +18,12 @@ class EnergyGenerator(BaseGenerator):
     - Station-specific base loads
     """
 
-    def __init__(self, days: int = 180, seed: int = 42, start_date: datetime | None = None):
+    def __init__(self, days: int = 180, seed: int = 42, start_date: datetime | None = None) -> None:
+        """Initialize the energy generator with default window and seed."""
         super().__init__(days, seed, start_date)
 
     def generate(self) -> dict[str, list[dict[str, Any]]]:
+        """Generate energy_consumption rows at 15-minute intervals for all stations."""
         rows: list[dict[str, Any]] = []
 
         base_loads = {

@@ -1,0 +1,154 @@
+[
+  {
+    "id": "RT-001",
+    "category": "routing",
+    "query": "Why is OEE dropping at the Welding stage?",
+    "expected_agent": "improvement_agent",
+    "wrong_agents": ["production_agent"],
+    "routing_rationale": "OEE lookup alone goes to production_agent, but 'why is it dropping' requires trend analysis and root cause reasoning — that is improvement_agent's domain",
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Query asks for root cause of a trend, not just a metric value — routes to improvement_agent",
+          "improvement_agent compares periods, correlates OEE components with defect rates and downtime, and recommends action",
+          "production_agent would only return the current OEE number without trend reasoning"
+        ],
+        "data": []
+      },
+      "expected_behavior": "Routed to improvement_agent — retrieves OEE trend, identifies declining component (Availability or Performance), correlates with failure or defect data"
+    }
+  },
+  {
+    "id": "RT-002",
+    "category": "routing",
+    "query": "Is the hydraulic pump on Press 1 about to fail?",
+    "expected_agent": "equipment_agent",
+    "wrong_agents": ["quality_agent", "improvement_agent"],
+    "routing_rationale": "Predictive failure question — requires sensor trend, degradation state, and RUL analysis. This is equipment_agent's core capability.",
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Query asks about equipment health and failure prediction — routes to equipment_agent",
+          "equipment_agent retrieves sensor trend, degradation health index, and RUL estimate for STP-01-PRS-HYP01",
+          "improvement_agent handles process changes, not equipment health prediction"
+        ],
+        "data": []
+      },
+      "expected_behavior": "Routed to equipment_agent — retrieves hydraulic pressure and temperature sensor trend, checks degradation state and RUL, gives failure probability assessment"
+    }
+  },
+  {
+    "id": "RT-003",
+    "category": "routing",
+    "query": "Should we accept or reject lot SUP-MTL02-LOT-2601-152?",
+    "expected_agent": "quality_agent",
+    "wrong_agents": ["production_agent", "action_agent"],
+    "routing_rationale": "AQL accept/reject decision based on receiving inspection results — quality_agent applies AQL rules and supplier quality context. production_agent handles inventory/BOM, action_agent creates documents.",
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Query is a supplier lot disposition decision — routes to quality_agent",
+          "quality_agent retrieves receiving inspection results, applies AQL rules, checks supplier scorecard for SUP-MTL02",
+          "action_agent would only be invoked after the decision to create an NCR — not for the decision itself"
+        ],
+        "data": []
+      },
+      "expected_behavior": "Routed to quality_agent — retrieves receiving inspection for lot SUP-MTL02-LOT-2601-152, applies AQL accept/reject criteria, returns disposition recommendation"
+    }
+  },
+  {
+    "id": "RT-004",
+    "category": "routing",
+    "query": "We changed the weld parameters on WLD-01-UBD last month. Did it improve quality?",
+    "expected_agent": "improvement_agent",
+    "wrong_agents": ["quality_agent"],
+    "routing_rationale": "Before/after comparison of a process change is PDCA CHECK step — improvement_agent. quality_agent can pull Cpk and defect rates but cannot perform the period comparison or give a STANDARDIZE/MODIFY/REVERT recommendation.",
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Query asks to evaluate the effect of a process change — routes to improvement_agent",
+          "improvement_agent runs compare_periods, retrieves Cpk and defect rates before vs after, and gives a PDCA recommendation",
+          "quality_agent would return current metrics only — no period comparison or change evaluation"
+        ],
+        "data": []
+      },
+      "expected_behavior": "Routed to improvement_agent — compares defect rate and Cpk before vs after the parameter change date, returns STANDARDIZE/MODIFY/REVERT recommendation"
+    }
+  },
+  {
+    "id": "RT-005",
+    "category": "routing",
+    "query": "Write a work order for the monthly PM on curing oven PNT-03-CLR-OVN01.",
+    "expected_agent": "action_agent",
+    "wrong_agents": ["equipment_agent"],
+    "routing_rationale": "Creating a document (work order) is action_agent's job. equipment_agent diagnoses and recommends — it does not create work orders.",
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Query asks to create a document — routes to action_agent",
+          "action_agent retrieves maintenance history and PM spec, then calls create_work_order",
+          "equipment_agent would retrieve maintenance history but cannot create the work order document"
+        ],
+        "data": []
+      },
+      "expected_behavior": "Routed to action_agent — retrieves maintenance history and curing_oven.md PM spec, creates work order for PNT-03-CLR-OVN01 monthly PM"
+    }
+  },
+  {
+    "id": "RT-006",
+    "category": "routing",
+    "query": "How many PE-SD100 vehicles can we build with current raw material inventory?",
+    "expected_agent": "production_agent",
+    "wrong_agents": ["equipment_agent", "quality_agent"],
+    "routing_rationale": "MRP feasibility check — cross-references BOM against current inventory stock. This is production_agent's check_mrp tool.",
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Query is an MRP feasibility question — routes to production_agent",
+          "production_agent calls check_mrp with model_id=PE-SD100 and a batch quantity",
+          "equipment_agent and quality_agent have no inventory or BOM tools"
+        ],
+        "data": []
+      },
+      "expected_behavior": "Routed to production_agent — calls check_mrp for PE-SD100, returns how many units are feasible given current inventory, flags any material shortfalls"
+    }
+  },
+  {
+    "id": "RT-007",
+    "category": "routing",
+    "query": "Cpk at WLD-01-UBD dropped below 1.33. What should we do?",
+    "expected_agent": "improvement_agent",
+    "wrong_agents": ["quality_agent"],
+    "routing_rationale": "Cpk lookup is quality_agent, but 'what should we do' requires PDCA reasoning — check FMEA for risk context, compare trend, recommend corrective action. That is improvement_agent.",
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Query moves beyond metric retrieval into corrective action recommendation — routes to improvement_agent",
+          "improvement_agent retrieves Cpk trend, searches FMEA for incomplete fusion risk (WLD-001, RPN 144), and recommends action",
+          "quality_agent would return the Cpk value but not provide a structured corrective action recommendation"
+        ],
+        "data": []
+      },
+      "expected_behavior": "Routed to improvement_agent — retrieves Cpk trend for WLD-01-UBD, references FMEA WLD-001, recommends parameter adjustment or inspection increase"
+    }
+  },
+  {
+    "id": "RT-008",
+    "category": "routing",
+    "query": "What caused the cylinder seal failure on Press 1 on 2026-02-18?",
+    "expected_agent": "equipment_agent",
+    "wrong_agents": ["improvement_agent", "action_agent"],
+    "routing_rationale": "Root cause diagnosis of a specific failure event — equipment_agent retrieves the failure record, sensor trend leading up to failure, and maintenance history. improvement_agent handles process change evaluation, not single failure diagnosis.",
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Query asks to diagnose a specific equipment failure event — routes to equipment_agent",
+          "equipment_agent retrieves failure record FLR-STP01-2602-002, sensor trend for the 7 days prior, and maintenance history for context",
+          "Root cause from DB: excessive wear on cylinder seal exceeded service life threshold — detected by sensor alert"
+        ],
+        "data": []
+      },
+      "expected_behavior": "Routed to equipment_agent — retrieves failure record, pre-failure sensor trend showing pressure drops and temperature spikes, returns root cause and corrective/preventive actions"
+    }
+  }
+]

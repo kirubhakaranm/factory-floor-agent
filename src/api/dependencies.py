@@ -13,10 +13,20 @@ _runner = Runner(
     session_service=_session_service,
 )
 
+# Per-session message history: {session_id: [{"role", "content", "timestamp"}]}
+_message_history: dict[str, list[dict]] = {}
+
 
 def get_runner() -> Runner:
+    """Return the shared ADK Runner instance for dependency injection."""
     return _runner
 
 
 def get_session_service() -> InMemorySessionService:
+    """Return the shared in-memory ADK session service."""
     return _session_service
+
+
+def get_message_history() -> dict[str, list[dict]]:
+    """Return the per-session message history dict (session_id → message list)."""
+    return _message_history

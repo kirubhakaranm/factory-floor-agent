@@ -6,6 +6,8 @@ from datetime import datetime
 
 @dataclass
 class ToolCallTrace:
+    """Record of a single tool invocation including args, result preview, and timing."""
+
     tool_name: str
     args: dict
     result_preview: str
@@ -15,6 +17,8 @@ class ToolCallTrace:
 
 @dataclass
 class AgentTrace:
+    """Full execution trace for one agent session, aggregating all tool calls and the final response."""
+
     session_id: str
     agent_name: str
     query: str
@@ -25,6 +29,7 @@ class AgentTrace:
     total_duration_ms: float = 0.0
 
     def add_tool_call(self, tool_name: str, args: dict, result: str, duration_ms: float) -> None:
+        """Append a ToolCallTrace entry for one completed tool invocation."""
         self.tool_calls.append(ToolCallTrace(
             tool_name=tool_name,
             args=args,
@@ -33,11 +38,13 @@ class AgentTrace:
         ))
 
     def complete(self, response: str) -> None:
+        """Finalise the trace by recording the agent response and computing total duration."""
         self.response = response
         self.completed_at = datetime.now()
         self.total_duration_ms = (self.completed_at - self.started_at).total_seconds() * 1000
 
     def to_dict(self) -> dict:
+        """Serialise the trace to a plain dict suitable for logging or JSON export."""
         return {
             "session_id": self.session_id,
             "agent_name": self.agent_name,

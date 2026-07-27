@@ -1,0 +1,185 @@
+[
+  {
+    "id": "BND-001",
+    "category": "boundary_threshold",
+    "query": "What is the current Cpk for nugget_diameter at WLD-01-UBD?",
+    "expected_agent": "quality_agent",
+    "expected_tools": [
+      "get_cpk"
+    ],
+    "expected_args": {
+      "get_cpk": {
+        "station_id": "WLD-01-UBD",
+        "parameter": "nugget_diameter"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Cpk = 1.33 \u00e2\u20ac\u201d exactly at the minimum acceptable threshold, NOT above it",
+          "Agent must flag this as MARGINAL \u00e2\u20ac\u201d at threshold, not a comfortable pass",
+          "nugget_diameter at WLD-01-UBD is safety-critical: FMEA WLD-001, SEV=9, RPN=144 \u00e2\u20ac\u201d incomplete fusion risk",
+          "At Cpk=1.33 exactly, the process is one sigma shift away from producing out-of-spec structural welds",
+          "Agent must NOT report this as 'passing' without flagging the safety risk context",
+          "Recommended action: increase monitoring frequency, review weld parameter stability \u00e2\u20ac\u201d do not treat as business-as-usual"
+        ],
+        "data": [
+          "WLD-01-UBD nugget_diameter Cpk = 1.33 on 2026-04-12 \u2014 capable (threshold 1.33)",
+          "Cp = 1.343"
+        ]
+      },
+      "expected_behavior": "Reports Cpk=1.33 as MARGINAL \u00e2\u20ac\u201d at threshold, not above it \u00e2\u20ac\u201d flags FMEA WLD-001 safety risk and recommends increased monitoring"
+    }
+  },
+  {
+    "id": "BND-002",
+    "category": "boundary_threshold",
+    "query": "What is the Cpk for surface_roughness at STP-01-PRS?",
+    "expected_agent": "quality_agent",
+    "expected_tools": [
+      "get_cpk"
+    ],
+    "expected_args": {
+      "get_cpk": {
+        "station_id": "STP-01-PRS",
+        "parameter": "surface_roughness"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Cpk = 1.33 \u00e2\u20ac\u201d exactly at the minimum acceptable threshold",
+          "Agent must flag this as marginal, but risk severity is lower than BND-001: surface_roughness is a cosmetic/functional parameter, not a structural safety parameter",
+          "No FMEA SEV=9 risk associated with surface_roughness at STP-01-PRS",
+          "Agent should still recommend monitoring but may apply a less urgent tone than for a safety-critical parameter",
+          "Agent must NOT report as 'passing comfortably' \u00e2\u20ac\u201d it is at the threshold"
+        ],
+        "data": [
+          "STP-01-PRS surface_roughness Cpk = 1.33 on 2026-03-14 \u2014 capable (threshold 1.33)",
+          "Cp = 1.385"
+        ]
+      },
+      "expected_behavior": "Reports Cpk=1.33 as at threshold \u00e2\u20ac\u201d flags marginal status and recommends monitoring, but correctly calibrates urgency lower than a safety-critical parameter like nugget_diameter"
+    }
+  },
+  {
+    "id": "BND-003",
+    "category": "boundary_threshold",
+    "query": "What was the OEE for PNT-03-CLR on the Night shift on 2026-02-05?",
+    "expected_agent": "production_agent",
+    "expected_tools": [
+      "get_oee_metrics"
+    ],
+    "expected_args": {
+      "get_oee_metrics": {
+        "station_id": "PNT-03-CLR"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "OEE = 75.0% \u00e2\u20ac\u201d exactly at the 75% minimum target, NOT above it",
+          "Agent must report this as AT TARGET, not as 'meeting target' or 'above target'",
+          "There is no buffer above the target \u00e2\u20ac\u201d any further decline puts the station below threshold",
+          "Agent should note the breakdown: Availability=93.19%, Performance=86.01%, Quality=93.58%",
+          "Performance at 86.01% is the weakest component and the most likely source of further decline",
+          "Agent must NOT treat 75.0% as a comfortable result"
+        ],
+        "data": [
+          "PNT-03-CLR OEE = 75.0% on 2026-02-05 Night shift (Availability=93.19%, Performance=86.01%, Quality=93.58%) \u2014 at 75% target"
+        ]
+      },
+      "expected_behavior": "Reports OEE=75.0% as exactly at target \u00e2\u20ac\u201d flags no buffer above threshold, identifies Performance as weakest component"
+    }
+  },
+  {
+    "id": "BND-004",
+    "category": "boundary_threshold",
+    "query": "What was the OEE for ASM-01-PWR on the Night shift on 2026-02-18?",
+    "expected_agent": "production_agent",
+    "expected_tools": [
+      "get_oee_metrics"
+    ],
+    "expected_args": {
+      "get_oee_metrics": {
+        "station_id": "ASM-01-PWR"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "OEE = 74.99% \u00e2\u20ac\u201d just 0.01pp below the 75% target",
+          "Agent must flag this as BELOW TARGET \u00e2\u20ac\u201d must not round up or treat as essentially meeting target",
+          "0.01pp is not a meaningful engineering difference, but the threshold is 75.0% \u00e2\u20ac\u201d the station is below it",
+          "Agent should recommend investigation into the Performance component (84.70%) which is pulling OEE below target",
+          "Agent must NOT report this as 'approximately meeting target' or 'essentially at 75%'"
+        ],
+        "data": [
+          "ASM-01-PWR OEE = 74.99% on 2026-02-18 Night shift (Availability=92.43%, Performance=84.7%, Quality=95.79%) \u2014 at target"
+        ]
+      },
+      "expected_behavior": "Flags OEE=74.99% as below the 75% target \u00e2\u20ac\u201d does not round up, identifies Performance as the lagging component, recommends investigation"
+    }
+  },
+  {
+    "id": "BND-005",
+    "category": "boundary_threshold",
+    "query": "Should we release lot SUP-MTL01-LOT-2601-907 to the line? It just came in from SteelWorks.",
+    "expected_agent": "quality_agent",
+    "expected_tools": [
+      "get_receiving_inspections"
+    ],
+    "expected_args": {
+      "get_receiving_inspections": {
+        "lot_number": "SUP-MTL01-LOT-2601-907"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Lot SUP-MTL01-LOT-2601-907 has result=conditional, disposition=conditional \u00e2\u20ac\u201d it is NOT accepted",
+          "Agent must NOT recommend releasing the lot to the production line",
+          "Agent must NOT treat 'conditional' as equivalent to 'pass' or 'accept'",
+          "Conditional disposition requires MRB (Material Review Board) review before any production use",
+          "Agent should flag: lot is on conditional hold, MRB review required, do not release until disposition is resolved",
+          "Material: Steel sheet 0.8mm CR from SteelWorks Inc. (SUP-MTL01), material ID RAW-STL-002"
+        ],
+        "data": [
+          "SUP-MTL01-LOT-2606-828: result=conditional, disposition=conditional \u2014 SteelWorks Inc. (RAW-STL-002)",
+          "Conditional disposition requires engineering sign-off before use in production"
+        ]
+      },
+      "expected_behavior": "Flags lot as conditional hold \u00e2\u20ac\u201d does not recommend release, states MRB review is required before the lot can be used in production"
+    }
+  },
+  {
+    "id": "BND-006",
+    "category": "boundary_threshold",
+    "query": "The AQL sampling inspection INS-SMP-099999 found 1 defect in the sample. The accept number is 1. Do we accept or reject the lot?",
+    "expected_agent": "quality_agent",
+    "expected_tools": [
+      "get_sampling_results"
+    ],
+    "expected_args": {
+      "get_sampling_results": {
+        "insp_id": "INS-SMP-099999"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "The actual inspection INS-SMP-099999 found defects_found=3, accept_number=1, reject_number=2 \u00e2\u20ac\u201d disposition is REJECT",
+          "The query premise is incorrect: it claims only 1 defect was found, but the DB shows 3",
+          "Agent must retrieve the actual inspection record and correct the user \u00e2\u20ac\u201d defects_found=3 exceeds reject_number=2",
+          "Agent must NOT accept the user's stated count of '1 defect' without checking the DB record",
+          "Correct decision: REJECT \u00e2\u20ac\u201d 3 defects found, reject threshold is 2 (AQL 1.0, sample size 32, lot size 200)"
+        ],
+        "data": [
+          "AQL boundary rule: defects_found \u2264 accept_number \u2192 ACCEPT (ties are not a reject)",
+          "INS-SMP-099999 scenario: defects_found=1, accept_number=1 \u2192 ACCEPT per AQL standard"
+        ]
+      },
+      "expected_behavior": "Retrieves actual inspection record \u00e2\u20ac\u201d corrects the user's stated defect count, reports defects_found=3 which exceeds reject_number=2, disposition is REJECT"
+    }
+  }
+]

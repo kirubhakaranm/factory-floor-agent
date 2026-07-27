@@ -1,8 +1,8 @@
-﻿"""Action Agent â€” generate work orders, incident reports, 8D, NCRs, PDCA records."""
+﻿"""Action Agent — generate work orders, incident reports, 8D, NCRs, PDCA records."""
 
 from google.adk.agents import Agent
-from google.adk.models.lite_llm import LiteLlm
 
+from src.agents.model import get_agent_model
 from src.agents.prompts.action import ACTION_SYSTEM_PROMPT
 from src.agents.tools.action_tools import (
     create_8d_report,
@@ -11,14 +11,16 @@ from src.agents.tools.action_tools import (
     create_supplier_ncr,
     schedule_maintenance,
 )
+from src.agents.tools.failure_tools import get_failure_by_id, get_failure_history
 from src.agents.tools.maintenance_tools import create_work_order
 from src.agents.tools.rag_tools import search_past_issues, search_sop
+from src.agents.tools.sensor_tools import get_sensor_trend
 
 action_agent = Agent(
     name="action_agent",
-    model=LiteLlm(model="anthropic/claude-sonnet-5"),
+    model=get_agent_model(),
     description=(
-        "Documentation and action specialist â€” generates work orders, incident reports, "
+        "Documentation and action specialist — generates work orders, incident reports, "
         "8D problem-solving reports, supplier NCRs, PDCA records, and maintenance schedules. "
         "Route here when the user wants to create a document or take an action."
     ),
@@ -32,5 +34,9 @@ action_agent = Agent(
         schedule_maintenance,
         search_sop,
         search_past_issues,
+        get_sensor_trend,
+        get_failure_by_id,
+        get_failure_history,
     ],
 )
+

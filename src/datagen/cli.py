@@ -31,7 +31,7 @@ def generate(days: int, seed: int, output_dir: str) -> None:
         ("failures", FailureGenerator(days=days, seed=seed)),
         ("quality", QualityGenerator(days=days, seed=seed)),
         ("energy", EnergyGenerator(days=days, seed=seed)),
-        ("telemetry", TelemetryGenerator(days=days, seed=seed, interval_seconds=60)),
+        ("telemetry", TelemetryGenerator(days=days, seed=seed, interval_seconds=300)),
         ("degradation", DegradationGenerator(days=days, seed=seed)),
     ]
 
@@ -65,6 +65,7 @@ def generate(days: int, seed: int, output_dir: str) -> None:
 
 
 def main() -> None:
+    """Parse CLI arguments and dispatch to generate or load commands."""
     parser = argparse.ArgumentParser(
         description="PrimeEV Motors — Synthetic Factory Data Generator"
     )
@@ -87,7 +88,6 @@ def main() -> None:
         print("\n=== Generation complete! ===")
 
     elif args.command == "load":
-        from pathlib import Path
         from src.datagen.loader import load_clickhouse, load_postgres
 
         data_dir = Path(args.input)

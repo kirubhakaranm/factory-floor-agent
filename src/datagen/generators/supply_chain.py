@@ -12,12 +12,14 @@ class SupplyChainGenerator(BaseGenerator):
     supplier_scorecards, supplier_ncrs for Postgres.
     """
 
-    def __init__(self, days: int = 180, seed: int = 42, start_date: datetime | None = None):
+    def __init__(self, days: int = 180, seed: int = 42, start_date: datetime | None = None) -> None:
+        """Initialize supply chain generator with receiving inspection and NCR sequence counters."""
         super().__init__(days, seed, start_date)
         self._ri_seq = 0
         self._ncr_seq = 0
 
     def generate(self) -> dict[str, list[dict[str, Any]]]:
+        """Generate suppliers, raw_materials, receiving_inspections, scorecards, and NCRs."""
         suppliers = self._generate_suppliers()
         raw_materials = self._generate_raw_materials()
         receiving = self._generate_receiving_inspections()
@@ -33,6 +35,7 @@ class SupplyChainGenerator(BaseGenerator):
         }
 
     def _generate_suppliers(self) -> list[dict[str, Any]]:
+        """Generate one supplier row per entry in the SUPPLIERS constant."""
         return [
             {
                 "supplier_id": sid,
@@ -45,6 +48,7 @@ class SupplyChainGenerator(BaseGenerator):
         ]
 
     def _generate_raw_materials(self) -> list[dict[str, Any]]:
+        """Generate the fixed list of raw material master records."""
         materials = [
             ("RAW-STL-001", "SUP-MTL01", "Steel sheet 1.2mm CR"),
             ("RAW-STL-002", "SUP-MTL01", "Steel sheet 0.8mm CR"),
@@ -78,6 +82,7 @@ class SupplyChainGenerator(BaseGenerator):
         ]
 
     def _generate_receiving_inspections(self) -> list[dict[str, Any]]:
+        """Generate 3-7 receiving inspection events per weekday across the simulation window."""
         rows = []
         supplier_ids = list(SUPPLIERS.keys())
         for day in range(self.days):
@@ -111,6 +116,7 @@ class SupplyChainGenerator(BaseGenerator):
         return rows
 
     def _generate_scorecards(self) -> list[dict[str, Any]]:
+        """Generate monthly supplier scorecard rows for all suppliers over 6 months."""
         rows = []
         for supplier_id in SUPPLIERS:
             for month in range(1, 7):
@@ -135,6 +141,7 @@ class SupplyChainGenerator(BaseGenerator):
         return rows
 
     def _generate_ncrs(self) -> list[dict[str, Any]]:
+        """Generate supplier NCR events with ~40% weekly probability across the simulation window."""
         rows = []
         supplier_ids = list(SUPPLIERS.keys())
         for week in range(self.days // 7):

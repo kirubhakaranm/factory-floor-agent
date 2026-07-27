@@ -7,6 +7,8 @@ from pathlib import Path
 
 @dataclass
 class Chunk:
+    """A single text chunk with associated source metadata for indexing into ChromaDB."""
+
     text: str
     metadata: dict = field(default_factory=dict)
 

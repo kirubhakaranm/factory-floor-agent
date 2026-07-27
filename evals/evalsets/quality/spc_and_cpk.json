@@ -1,93 +1,362 @@
 [
   {
     "id": "QA-001",
-    "query": "What's the Cpk trend for panel thickness at Station STP-01-PRS?",
+    "query": "What's the Cpk trend for panel thickness at Station STP-01-PRS over the last 2 weeks?",
     "expected_agent": "quality_agent",
-    "expected_tools": ["get_cpk", "get_process_capability"],
+    "expected_tools": [
+      "get_cpk",
+      "get_process_capability"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_cpk",
+        "required_args": {
+          "station_id": "STP-01-PRS"
+        }
+      },
+      {
+        "tool": "get_process_capability",
+        "required_args": {
+          "station_id": "STP-01-PRS"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_cpk": {
+        "station_id": "STP-01-PRS"
+      },
+      "get_process_capability": {
+        "station_id": "STP-01-PRS"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "Should return daily Cpk values over time",
-        "Cpk >= 1.33 is capable, 1.0-1.33 is marginal, < 1.0 is not capable",
-        "Should identify trend direction and flag if declining"
-      ]
+      "key_facts": {
+        "domain": [
+          "Should return daily Cpk values over time",
+          "Cpk >= 1.33 is capable, 1.0-1.33 is marginal, < 1.0 is not capable",
+          "Should identify trend direction and flag if declining"
+        ],
+        "data": [
+          "Latest Cpk for panel_thickness at STP-01-PRS: 1.216 \u2014 marginal",
+          "Cp: 1.339",
+          "Cpk trend over last 14 days: improving"
+        ]
+      }
     }
   },
   {
     "id": "QA-002",
-    "query": "Are there any SPC out-of-control signals on the welding station?",
+    "query": "Are there any SPC out-of-control signals on the welding station right now?",
     "expected_agent": "quality_agent",
-    "expected_tools": ["check_control_rules", "get_spc_data"],
+    "expected_tools": [
+      "check_control_rules",
+      "get_spc_data"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_spc_data",
+        "required_args": {
+          "station_id": "WLD-01-UBD"
+        }
+      },
+      {
+        "tool": "check_control_rules",
+        "required_args": {
+          "station_id": "WLD-01-UBD"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_spc_data": {
+        "station_id": "WLD-01-UBD"
+      },
+      "check_control_rules": {
+        "station_id": "WLD-01-UBD"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "Should check Western Electric rules: point beyond 3-sigma, 9 consecutive same side, 6 trending",
-        "Should report specific rule violations with data point references",
-        "Status should be IN CONTROL or OUT OF CONTROL"
-      ]
+      "key_facts": {
+        "domain": [
+          "Should check Western Electric rules: point beyond 3-sigma, 9 consecutive same side, 6 trending",
+          "Should report specific rule violations with data point references",
+          "Status should be IN CONTROL or OUT OF CONTROL with supporting evidence"
+        ],
+        "data": [
+          "WLD-01-UBD overall status: OUT OF CONTROL \u2014 6 parameter(s) with active signals: weld_current, squeeze_time, nugget_diameter, electrode_force, weld_time, shunt_distance",
+          "  weld_current: Cpk=0.996, signals=1",
+          "  squeeze_time: Cpk=1.572, signals=1",
+          "  nugget_diameter: Cpk=1.485, signals=1",
+          "  electrode_force: Cpk=1.279, signals=1",
+          "  weld_time: Cpk=1.534, signals=1",
+          "  shunt_distance: Cpk=1.146, signals=1"
+        ]
+      }
     }
   },
   {
     "id": "QA-003",
-    "query": "Should we reject Lot 4502 based on the AQL sampling results?",
+    "query": "Should we accept or reject LOT-STP-2606-4105 based on the AQL sampling results?",
     "expected_agent": "quality_agent",
-    "expected_tools": ["get_sampling_results", "search_specification"],
+    "expected_tools": [
+      "get_sampling_results",
+      "search_specification"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_sampling_results",
+        "required_args": {}
+      },
+      {
+        "tool": "search_specification",
+        "required_args": {}
+      }
+    ],
     "ground_truth": {
-      "key_facts": [
-        "Must reference the specific AQL level, sample size, accept number, and defects found",
-        "If defects > accept number, recommend rejection",
-        "Should mention option for tightened inspection or 100% screening"
-      ]
+      "key_facts": {
+        "domain": [
+          "Must reference the specific AQL level, sample size, accept number, and defects found",
+          "If defects found \u2264 accept number, recommend acceptance",
+          "Should confirm lot disposition from inspection record"
+        ],
+        "data": [
+          "LOT-STP-2606-4105: station=STP-01-PRS, lot_size=167, sample_size=8, AQL=2.5",
+          "accept_number=0, defects_found=0 \u2192 ACCEPT",
+          "Disposition: accept"
+        ]
+      },
+      "expected_recommendation": "Accept LOT-STP-2606-4105 \u2014 defects found within AQL limit"
     }
   },
   {
     "id": "QA-004",
-    "query": "What's our defect rate at the Paint station this week?",
+    "query": "What's our defect rate at the Clearcoat/Cure Paint station (PNT-03-CLR) over the last 7 days?",
     "expected_agent": "quality_agent",
-    "expected_tools": ["get_defect_rates", "get_dimensional_results"],
+    "expected_tools": [
+      "get_defect_rates",
+      "get_dimensional_results"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_defect_rates",
+        "required_args": {
+          "station_id": "PNT-03-CLR"
+        }
+      },
+      {
+        "tool": "get_dimensional_results",
+        "required_args": {
+          "station_id": "PNT-03-CLR"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_defect_rates": {
+        "station_id": "PNT-03-CLR"
+      },
+      "get_dimensional_results": {
+        "station_id": "PNT-03-CLR"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "Should report pass/fail counts and defect rate percentage",
-        "Should break down by defect type if possible",
-        "Should compare to FPY target for paint stations"
-      ]
+      "key_facts": {
+        "domain": [
+          "Should report pass/fail counts and defect rate percentage for PNT-03-CLR",
+          "Should break down by defect type (runs/sags, dust inclusion, haze, pinholes)",
+          "Should compare to FPY target for paint stations"
+        ],
+        "data": [
+          "PNT-03-CLR last 7 days (anchor 2026-06-29): 546 inspections, 33 failed \u2014 defect rate 6.0%, FPY 94.0%",
+          "Top failing measurements: dim_13(4), dim_5(3), dim_12(3), dim_18(2)"
+        ]
+      }
     }
   },
   {
     "id": "QA-005",
-    "query": "How many reworks happened at Assembly this month? What's the cost?",
+    "query": "How many reworks happened at Assembly in the last 30 days? What's the total cost?",
     "expected_agent": "quality_agent",
-    "expected_tools": ["get_rework_history"],
+    "expected_tools": [
+      "get_rework_history"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_rework_history",
+        "required_args": {
+          "station_id": "ASM"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_rework_history": {
+        "station_id": "ASM"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "Should report total rework count, total rework time, total cost",
-        "Should break down by station (ASM-01, ASM-02, ASM-03)",
-        "Should identify top defect types causing rework"
-      ]
+      "key_facts": {
+        "domain": [
+          "Should report total rework count, total rework time, and total cost for Assembly",
+          "Should break down by station (ASM-01-PWR, ASM-02-INT, ASM-03-FNL)",
+          "Should identify top defect types causing rework"
+        ],
+        "data": [
+          "Total Assembly rework last 30 days: 54 events, 1348 min, $5862.11"
+        ]
+      }
     }
   },
   {
     "id": "QA-006",
-    "query": "Supplier SteelWorks quality has been declining. Show me the data.",
+    "query": "Supplier SteelWorks quality has been declining over the last 3 months. Show me the data.",
     "expected_agent": "quality_agent",
-    "expected_tools": ["get_supplier_scorecard", "get_receiving_inspections", "get_supplier_ncrs"],
+    "expected_tools": [
+      "get_supplier_scorecard",
+      "get_receiving_inspections",
+      "get_supplier_ncrs"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_supplier_scorecard",
+        "required_args": {
+          "supplier_id": "SUP-MTL01"
+        }
+      },
+      {
+        "tool": "get_receiving_inspections",
+        "required_args": {
+          "supplier_id": "SUP-MTL01"
+        }
+      },
+      {
+        "tool": "get_supplier_ncrs",
+        "required_args": {
+          "supplier_id": "SUP-MTL01"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_supplier_scorecard": {
+        "supplier_id": "SUP-MTL01"
+      },
+      "get_receiving_inspections": {
+        "supplier_id": "SUP-MTL01"
+      },
+      "get_supplier_ncrs": {
+        "supplier_id": "SUP-MTL01"
+      }
+    },
     "ground_truth": {
-      "key_facts": [
-        "Should show monthly defect PPM trend for SUP-MTL01",
-        "Should show receiving inspection pass/fail/conditional rates",
-        "Should list any NCRs issued against this supplier"
-      ]
+      "key_facts": {
+        "domain": [
+          "Should show monthly defect PPM trend for SUP-MTL01 (SteelWorks)",
+          "Should show receiving inspection pass/fail/conditional rates",
+          "Should list any NCRs issued against this supplier"
+        ],
+        "data": [
+          "SUP-MTL01 quality score trend: Jan=65.6 \u2192 Feb=81.7 \u2192 Mar=91.0 \u2192 Apr=52.6 \u2192 May=76.5 \u2192 Jun=74.4",
+          "SUP-MTL01 defect PPM trend: 343.7 \u2192 182.9 \u2192 89.9 \u2192 474.1 \u2192 235.0 \u2192 255.5",
+          "Latest grade: C (score=74.4)"
+        ]
+      },
+      "expected_recommendation": "Escalate to supplier quality review \u00e2\u20ac\u201d defect PPM nearly tripled Jan to Jun, grade dropped from B to D"
     }
   },
   {
     "id": "QA-007",
     "query": "What does the PFMEA say about panel cracking risk in Stamping?",
     "expected_agent": "quality_agent",
-    "expected_tools": ["search_fmea_risks"],
+    "expected_tools": [
+      "search_fmea_risks"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "search_fmea_risks",
+        "required_args": {}
+      }
+    ],
     "ground_truth": {
-      "key_facts": [
-        "Should reference PFMEA-STP item STP-002",
-        "Severity 8, potential causes: die wear, insufficient lubrication, material hardness",
-        "Should report current RPN and recommended actions"
-      ]
+      "key_facts": {
+        "domain": [
+          "Should reference PFMEA-STP item STP-002 from pfmea_stamping.md",
+          "Failure mode: Panel cracking \u00e2\u20ac\u201d effect: Scrap, production delay",
+          "Severity=8, Occurrence=4, Detection=4, RPN=128",
+          "Potential causes: die wear, insufficient lubrication, material hardness variation",
+          "Recommended action: implement force-displacement curve monitoring with auto-stop"
+        ],
+        "data": []
+      }
+    }
+  },
+  {
+    "id": "QA-008",
+    "query": "How many panels were scrapped at Stamping in the last 30 days and what were the reasons?",
+    "expected_agent": "quality_agent",
+    "expected_tools": [
+      "get_scrap_records"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_scrap_records",
+        "required_args": {
+          "station_id": "STP"
+        }
+      }
+    ],
+    "expected_args": {
+      "get_scrap_records": {
+        "station_id": "STP"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Should report total scrap count and cost for all Stamping stations last 30 days",
+          "Should break down by defect type and station",
+          "Should identify which station has highest scrap rate"
+        ],
+        "data": [
+          "Total Stamping scrap last 30 days: 8 panels, $6777.00"
+        ]
+      }
+    }
+  },
+  {
+    "id": "QA-009",
+    "query": "There's an active SPC signal on nugget diameter at WLD-01-UBD. What's the current Cpk and what does the spec require?",
+    "expected_agent": "quality_agent",
+    "expected_tools": [
+      "get_cpk",
+      "search_specification"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_cpk",
+        "required_args": {
+          "station_id": "WLD-01-UBD"
+        }
+      },
+      {
+        "tool": "search_specification",
+        "required_args": {}
+      }
+    ],
+    "expected_args": {
+      "get_cpk": {
+        "station_id": "WLD-01-UBD"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Should report current Cpk for nugget_diameter at WLD-01-UBD",
+          "Nugget diameter minimum spec per process specification is 4.5mm for body panels",
+          "Cpk < 1.33 requires mandatory corrective action per quality system requirements",
+          "Should recommend parameter review if Cpk is marginal (1.0-1.33)"
+        ],
+        "data": [
+          "Latest Cpk for nugget_diameter at WLD-01-UBD: 1.397 \u2014 capable",
+          "Cp: 1.488"
+        ]
+      }
     }
   }
 ]

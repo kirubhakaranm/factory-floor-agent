@@ -2,6 +2,7 @@ apiVersion: 1
 
 datasources:
   - name: Prometheus
+    uid: prometheus
     type: prometheus
     access: proxy
     url: http://prometheus:9090
@@ -9,9 +10,13 @@ datasources:
     editable: true
 
   - name: ClickHouse
+    uid: clickhouse
     type: grafana-clickhouse-datasource
     access: proxy
-    url: http://clickhouse:8123
     jsonData:
+      server: clickhouse
+      port: 8123
+      username: default
       defaultDatabase: primeev_telemetry
+      protocol: http
     editable: true

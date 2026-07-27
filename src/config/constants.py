@@ -225,6 +225,8 @@ STATION_DEFECTS: dict[str, list[str]] = {
 
 @dataclass
 class ShiftConfig:
+    """Configuration for a single production shift (name, hours, and assigned crews)."""
+
     name: str
     start_hour: int
     end_hour: int

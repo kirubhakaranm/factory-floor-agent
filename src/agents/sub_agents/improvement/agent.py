@@ -1,8 +1,8 @@
-﻿"""Improvement (PDCA) Agent â€” before/after analysis, continuous improvement."""
+﻿"""Improvement (PDCA) Agent — before/after analysis, continuous improvement."""
 
 from google.adk.agents import Agent
-from google.adk.models.lite_llm import LiteLlm
 
+from src.agents.model import get_agent_model
 from src.agents.prompts.improvement import IMPROVEMENT_SYSTEM_PROMPT
 from src.agents.tools.comparison_tools import compare_periods, compare_shifts
 from src.agents.tools.production_tools import get_cycle_times, get_oee_metrics, get_throughput
@@ -13,9 +13,9 @@ from src.agents.tools.spc_tools import get_cpk, get_process_capability
 
 improvement_agent = Agent(
     name="improvement_agent",
-    model=LiteLlm(model="anthropic/claude-sonnet-5"),
+    model=get_agent_model(),
     description=(
-        "Continuous improvement specialist â€” handles PDCA analysis, before/after comparisons, "
+        "Continuous improvement specialist — handles PDCA analysis, before/after comparisons, "
         "Six Sigma metrics, FMEA updates, and improvement effectiveness validation. "
         "Route here when the user wants to evaluate whether a change improved results."
     ),
@@ -36,3 +36,4 @@ improvement_agent = Agent(
         search_past_issues,
     ],
 )
+

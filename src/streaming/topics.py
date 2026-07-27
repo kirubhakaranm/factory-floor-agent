@@ -19,6 +19,8 @@ ALL_TOPICS = [TOPIC_SENSORS_RAW, TOPIC_ALERTS_NEW, TOPIC_PRODUCTION_EVENTS]
 
 @dataclass
 class SensorMessage:
+    """Kafka message payload for a single sensor reading from a machine."""
+
     machine_id: str
     station_id: str
     sensor_type: str
@@ -27,15 +29,19 @@ class SensorMessage:
     timestamp: str  # ISO format
 
     def to_json(self) -> bytes:
+        """Serialize this message to a UTF-8 encoded JSON byte string."""
         return json.dumps(asdict(self)).encode("utf-8")
 
     @classmethod
     def from_json(cls, data: bytes) -> "SensorMessage":
+        """Deserialize a SensorMessage from a UTF-8 encoded JSON byte string."""
         return cls(**json.loads(data))
 
 
 @dataclass
 class AlertMessage:
+    """Kafka message payload for a threshold or Cpk breach alert."""
+
     alert_id: str
     machine_id: str
     station_id: str
@@ -48,15 +54,19 @@ class AlertMessage:
     timestamp: str
 
     def to_json(self) -> bytes:
+        """Serialize this alert to a UTF-8 encoded JSON byte string."""
         return json.dumps(asdict(self)).encode("utf-8")
 
     @classmethod
     def from_json(cls, data: bytes) -> "AlertMessage":
+        """Deserialize an AlertMessage from a UTF-8 encoded JSON byte string."""
         return cls(**json.loads(data))
 
 
 @dataclass
 class ProductionEventMessage:
+    """Kafka message payload for production lifecycle events (batch start/end, shift change)."""
+
     event_type: str  # batch_start, batch_end, station_status, shift_change
     station_id: str
     batch_id: str | None = None
@@ -66,8 +76,10 @@ class ProductionEventMessage:
     timestamp: str = ""
 
     def to_json(self) -> bytes:
+        """Serialize this production event to a UTF-8 encoded JSON byte string."""
         return json.dumps(asdict(self)).encode("utf-8")
 
     @classmethod
     def from_json(cls, data: bytes) -> "ProductionEventMessage":
+        """Deserialize a ProductionEventMessage from a UTF-8 encoded JSON byte string."""
         return cls(**json.loads(data))

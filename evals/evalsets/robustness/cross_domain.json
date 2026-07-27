@@ -1,0 +1,215 @@
+[
+  {
+    "id": "CD-001",
+    "category": "cross_domain",
+    "query": "PNT-03-CLR OEE has been declining since January 2026. Identify the root cause and create a PM work order to address it.",
+    "expected_agent": "root_agent",
+    "expected_tools": [
+      "get_oee_metrics",
+      "compare_periods",
+      "get_maintenance_history",
+      "create_work_order"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_oee_metrics",
+        "required_args": {
+          "station_id": "PNT-03-CLR"
+        }
+      },
+      {
+        "tool": "compare_periods",
+        "required_args": {}
+      },
+      {
+        "tool": "get_maintenance_history",
+        "required_args": {
+          "machine_id": "PNT-03-CLR-OVN01"
+        }
+      },
+      {
+        "tool": "create_work_order",
+        "required_args": {}
+      }
+    ],
+    "expected_args": {
+      "get_oee_metrics": {
+        "station_id": "PNT-03-CLR"
+      },
+      "get_maintenance_history": {
+        "machine_id": "PNT-03-CLR-OVN01"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Must retrieve OEE for PNT-03-CLR across Jan and Mar 2026 \u00e2\u20ac\u201d involves production_agent",
+          "Must compare periods to identify the declining component \u00e2\u20ac\u201d involves improvement_agent",
+          "Must retrieve maintenance history to inform PM scope \u00e2\u20ac\u201d involves equipment_agent",
+          "Must create a work order for PM \u00e2\u20ac\u201d involves action_agent",
+          "Root agent must orchestrate all sub-agents without losing context between steps"
+        ],
+        "data": [
+          "PNT-03-CLR OEE Jan 2026: 81.72% \u2192 Mar 2026: 81.17% \u2014 decline of 0.55pp"
+        ]
+      },
+      "expected_behavior": "Retrieves OEE trend, identifies decline, reviews maintenance history, creates PM work order \u00e2\u20ac\u201d all context carried across agent boundaries without re-asking for station ID"
+    }
+  },
+  {
+    "id": "CD-002",
+    "category": "cross_domain",
+    "query": "The Cpk for nugget_diameter at WLD-01-UBD has been marginal. Pull the recent rework history at that station and write an 8D report for the incomplete fusion defect.",
+    "expected_agent": "root_agent",
+    "expected_tools": [
+      "get_cpk",
+      "get_rework_history",
+      "search_fmea_risks",
+      "create_8d_report"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_cpk",
+        "required_args": {
+          "station_id": "WLD-01-UBD"
+        }
+      },
+      {
+        "tool": "get_rework_history",
+        "required_args": {
+          "station_id": "WLD-01-UBD"
+        }
+      },
+      {
+        "tool": "search_fmea_risks",
+        "required_args": {}
+      },
+      {
+        "tool": "create_8d_report",
+        "required_args": {}
+      }
+    ],
+    "expected_args": {
+      "get_cpk": {
+        "station_id": "WLD-01-UBD"
+      },
+      "get_rework_history": {
+        "station_id": "WLD-01-UBD"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Must retrieve Cpk for nugget_diameter \u00e2\u20ac\u201d involves quality_agent",
+          "Must retrieve rework history for incomplete fusion at WLD-01-UBD \u00e2\u20ac\u201d involves quality_agent",
+          "Must reference FMEA WLD-001 (SEV=9, RPN=144) for 8D problem description \u00e2\u20ac\u201d involves improvement_agent",
+          "Must create 8D report documenting incomplete fusion defect \u00e2\u20ac\u201d involves action_agent",
+          "8D report must reference the 2026-03-01 weld parameter change as the corrective action context"
+        ],
+        "data": [
+          "WLD-01-UBD nugget_diameter Cpk: 1.33 on 2026-04-12 \u2014 capable (threshold 1.33)",
+          "WLD-01-UBD total reworks: 463, total cost $47384.08"
+        ]
+      },
+      "expected_behavior": "Retrieves marginal Cpk, pulls incomplete fusion rework records, references FMEA WLD-001, creates 8D report \u00e2\u20ac\u201d station ID carried across all agent calls"
+    }
+  },
+  {
+    "id": "CD-003",
+    "category": "cross_domain",
+    "query": "SteelWorks quality score has been declining sharply. Review their scorecard trend and issue an NCR for their most recent failing lot.",
+    "expected_agent": "root_agent",
+    "expected_tools": [
+      "get_supplier_scorecard",
+      "get_receiving_inspections",
+      "create_supplier_ncr"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "get_supplier_scorecard",
+        "required_args": {
+          "supplier_id": "SUP-MTL01"
+        }
+      },
+      {
+        "tool": "get_receiving_inspections",
+        "required_args": {
+          "supplier_id": "SUP-MTL01"
+        }
+      },
+      {
+        "tool": "create_supplier_ncr",
+        "required_args": {}
+      }
+    ],
+    "expected_args": {
+      "get_supplier_scorecard": {
+        "supplier_id": "SUP-MTL01"
+      },
+      "get_receiving_inspections": {
+        "supplier_id": "SUP-MTL01"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Must retrieve supplier scorecard for SUP-MTL01 (SteelWorks Inc.) \u00e2\u20ac\u201d involves quality_agent",
+          "Must identify most recent failing lot from receiving_inspections \u00e2\u20ac\u201d involves quality_agent",
+          "Must create supplier NCR referencing the failing lot \u00e2\u20ac\u201d involves action_agent",
+          "NCR must be raised against SUP-MTL01, not another supplier"
+        ],
+        "data": [
+          "SteelWorks (SUP-MTL01) quality score trend: Jan=65.6 \u2192 Feb=81.7 \u2192 Mar=91.0 \u2192 Apr=52.6 \u2192 May=76.5 \u2192 Jun=74.4",
+          "Defect PPM trend: 343.7 \u2192 182.9 \u2192 89.9 \u2192 474.1 \u2192 235.0 \u2192 255.5"
+        ]
+      },
+      "expected_behavior": "Retrieves and summarizes declining scorecard trend, identifies SUP-MTL01-LOT-2603-355 as most recent failing lot, creates NCR against SteelWorks \u00e2\u20ac\u201d supplier ID carried across both agent calls"
+    }
+  },
+  {
+    "id": "CD-004",
+    "category": "cross_domain",
+    "query": "VIN PEF-SD100-26-002000 had a weld rework event. Trace its full production history, pull the rework details, and write an incident report for the defect.",
+    "expected_agent": "root_agent",
+    "expected_tools": [
+      "trace_vin_history",
+      "get_rework_history",
+      "create_incident_report"
+    ],
+    "expected_trajectory": [
+      {
+        "tool": "trace_vin_history",
+        "required_args": {
+          "vin_id": "PEF-SD100-26-002000"
+        }
+      },
+      {
+        "tool": "get_rework_history",
+        "required_args": {}
+      },
+      {
+        "tool": "create_incident_report",
+        "required_args": {}
+      }
+    ],
+    "expected_args": {
+      "trace_vin_history": {
+        "vin_id": "PEF-SD100-26-002000"
+      }
+    },
+    "ground_truth": {
+      "key_facts": {
+        "domain": [
+          "Must trace full production history for VIN PEF-SD100-26-002000 \u2014 involves production_agent",
+          "Must retrieve rework details (defect type, action, cost, re-inspect result) \u2014 involves quality_agent",
+          "Must create incident report for the weld defect \u2014 involves action_agent",
+          "VIN is PE-SD100 model, status=completed \u2014 incident report must reflect correct model"
+        ],
+        "data": [
+          "VIN PEF-SD100-26-002000: PrimeEV Sedan 100, production_date=2026-04-06, status=completed"
+        ]
+      },
+      "expected_behavior": "Traces VIN PEF-SD100-26-002000 production history, retrieves rework records at WLD station, creates incident report \u2014 VIN carried across all calls without re-asking"
+    }
+  }
+]

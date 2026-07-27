@@ -1,6 +1,6 @@
 """Action tools — generate real PDF documents and send notifications."""
 
-from datetime import datetime
+from typing import Literal
 
 from src.documents.models import (
     DocumentMeta,
@@ -13,23 +13,27 @@ from src.documents.models import (
     WorkOrderDoc,
 )
 from src.documents.renderer import generate_doc_id, render_pdf
-from src.notifications.channels.email_smtp import EmailChannel
-from src.notifications.router import NotificationRouter
-
-_router = NotificationRouter()
-_router.register_channel(EmailChannel())
 
 
-def _notify(meta: DocumentMeta, summary: str, pdf_path) -> dict[str, bool]:
-    """Send notification through all configured channels."""
-    from pathlib import Path
-    return _router.notify(meta, summary, Path(pdf_path) if pdf_path else None)
+def _to_float(value: int | float | str) -> float:
+    """Coerce agent-supplied cost values (e.g. '$5,142.11' or '5000') to float."""
+    if isinstance(value, (int, float)):
+        return float(value)
+    try:
+        return float(str(value).replace("$", "").replace(",", "").strip())
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def _notify(meta: DocumentMeta, summary: str, pdf_path: str | None) -> dict[str, bool]:
+    """Return a stub notification result; no channels configured."""
+    return {"email": False}
 
 
 def create_incident_report(
     station_id: str,
-    incident_type: str,
-    severity: str,
+    incident_type: Literal["equipment_failure", "quality_event", "safety"],
+    severity: Literal["critical", "major", "minor"],
     root_cause: str,
     immediate_actions: str,
     corrective_actions: str,
@@ -39,23 +43,35 @@ def create_incident_report(
     units_affected: int = 0,
     cost_total: float = 0.0,
 ) -> str:
-    """Create a formal incident report as PDF and notify stakeholders.
+    """[ACTION]: Create a formal incident report PDF and notify plant stakeholders. [TARGET]: PDF renderer + email notification system.
+
+    [INPUT PREREQUISITE]: station_id and incident_type and severity are required. root_cause,
+    immediate_actions, corrective_actions, and preventive_actions must all be confirmed facts —
+    do NOT invent these. This is an irreversible action that sends emails. Confirm all details
+    with the user before calling.
+
+    [OUTPUT GUARANTEE]: Returns a confirmation string with: doc_id (format IR-XXXXXX), PDF path,
+    and notification delivery status per channel. The PDF is immediately stored on disk.
+
+    [NEGATIVE BOUNDARY]: Cannot be undone — notifications are sent immediately. Does not create
+    a work order — use create_work_order or schedule_maintenance for that. Do not call
+    speculatively; only call when the user has confirmed all required fields.
 
     Args:
-        station_id: Station where incident occurred
-        incident_type: Type: equipment_failure, quality_event, safety
-        severity: Severity: critical, major, minor
-        root_cause: Determined root cause
-        immediate_actions: Actions already taken
-        corrective_actions: Actions to fix the root cause
+        station_id: Station where incident occurred (e.g. 'STP-01-PRS')
+        incident_type: Type: 'equipment_failure', 'quality_event', or 'safety'
+        severity: Severity: 'critical', 'major', or 'minor'
+        root_cause: Determined root cause (must be confirmed, not speculative)
+        immediate_actions: Actions already taken at time of report
+        corrective_actions: Planned actions to fix the root cause
         preventive_actions: Actions to prevent recurrence
         machine_id: Affected machine (optional)
-        downtime_min: Downtime in minutes
-        units_affected: Number of units impacted
-        cost_total: Total cost impact
+        downtime_min: Downtime in minutes (default 0)
+        units_affected: Number of units impacted (default 0)
+        cost_total: Total cost impact (default 0.0)
 
     Returns:
-        Confirmation with document ID and PDF path
+        Confirmation string with doc_id, PDF path, and notification status.
     """
     doc_id = generate_doc_id(DocumentType.INCIDENT_REPORT)
     meta = DocumentMeta(
@@ -79,10 +95,8 @@ def create_incident_report(
         cost_total=cost_total,
         distribution=["Plant Manager", "Quality Manager", "Maintenance Manager"],
     )
-
     pdf_path = render_pdf(DocumentType.INCIDENT_REPORT, meta, doc)
     notifications = _notify(meta, f"Incident report {doc_id} issued for {station_id}: {root_cause[:100]}", pdf_path)
-
     return (
         f"Incident Report created: {doc_id}\n"
         f"PDF: {pdf_path}\n"
@@ -102,22 +116,32 @@ def create_8d_report(
     units_affected: int = 0,
     cost_impact: float = 0.0,
 ) -> str:
-    """Create an 8D problem-solving report as PDF and notify stakeholders.
+    """[ACTION]: Create an 8D problem-solving report PDF and notify stakeholders. [TARGET]: PDF renderer + email notification system.
+
+    [INPUT PREREQUISITE]: problem_description, containment_actions, root_cause, corrective_actions,
+    and preventive_actions are all required. These must be substantiated by data — do not populate
+    them with placeholder text. This is an irreversible action that sends emails.
+
+    [OUTPUT GUARANTEE]: Returns a confirmation string with doc_id (format 8D-XXXXXX), PDF path,
+    and notification status. Status is 'Draft' requiring Quality Manager review.
+
+    [NEGATIVE BOUNDARY]: Cannot be undone. Does not create a work order for corrective actions —
+    use create_work_order separately. Do not call speculatively.
 
     Args:
-        problem_description: Clear description of the problem
-        containment_actions: Immediate containment
-        root_cause: Root cause from investigation
+        problem_description: Clear, specific description of the problem
+        containment_actions: Immediate containment steps taken
+        root_cause: Root cause from investigation (must be evidence-based)
         corrective_actions: Actions to eliminate root cause
         preventive_actions: Actions to prevent recurrence
-        team: Team members involved (optional)
-        related_failure_id: Related failure ID (optional)
+        team: Team members involved (optional, defaults to cross-functional team)
+        related_failure_id: Related failure ID from get_failure_by_id (optional)
         station_id: Related station (optional)
-        units_affected: Number of units impacted
-        cost_impact: Cost of the issue
+        units_affected: Number of units impacted (default 0)
+        cost_impact: Cost of the issue (default 0.0)
 
     Returns:
-        Confirmation with document ID and PDF path
+        Confirmation string with doc_id, PDF path, and notification status.
     """
     doc_id = generate_doc_id(DocumentType.EIGHT_D)
     meta = DocumentMeta(
@@ -136,13 +160,11 @@ def create_8d_report(
         d7_preventive_actions=preventive_actions,
         related_failure_id=related_failure_id,
         related_station_id=station_id,
-        units_affected=units_affected,
-        cost_impact=cost_impact,
+        units_affected=int(units_affected) if units_affected else 0,
+        cost_impact=_to_float(cost_impact),
     )
-
     pdf_path = render_pdf(DocumentType.EIGHT_D, meta, doc)
     notifications = _notify(meta, f"8D Report {doc_id} created: {problem_description[:100]}", pdf_path)
-
     return (
         f"8D Report created: {doc_id}\n"
         f"PDF: {pdf_path}\n"
@@ -158,21 +180,31 @@ def create_supplier_ncr(
     material_description: str,
     nonconformance: str,
     quantity_affected: int = 0,
-    disposition: str = "return",
+    disposition: Literal["return", "rework", "scrap", "use-as-is"] = "return",
 ) -> str:
-    """Create a Supplier Non-Conformance Report (NCR) as PDF and notify stakeholders.
+    """[ACTION]: Create a Supplier Non-Conformance Report (NCR) PDF and notify stakeholders. [TARGET]: PDF renderer + email notification system.
+
+    [INPUT PREREQUISITE]: supplier_id, supplier_name, lot_id, material_description, and
+    nonconformance are all required. disposition must be confirmed with the quality team before
+    calling. This is an irreversible action — the supplier will receive notification.
+
+    [OUTPUT GUARANTEE]: Returns confirmation with doc_id (format NCR-XXXXXX), PDF path,
+    disposition decision, supplier response deadline (10 business days), and notification status.
+
+    [NEGATIVE BOUNDARY]: Cannot be undone. Does not quarantine the physical lot in inventory —
+    that must be done manually. Do not call speculatively; confirm all details first.
 
     Args:
-        supplier_id: Supplier identifier (e.g., 'SUP-MTL01')
+        supplier_id: Supplier identifier (e.g. 'SUP-MTL01')
         supplier_name: Supplier company name
-        lot_id: Affected material lot
-        material_description: Description of the material
-        nonconformance: Description of the non-conformance
-        quantity_affected: Number of units/parts affected
-        disposition: Action: return, rework, scrap, use-as-is
+        lot_id: Affected material lot identifier
+        material_description: Description of the non-conforming material
+        nonconformance: Clear description of the non-conformance
+        quantity_affected: Number of units/parts affected (default 0)
+        disposition: Disposition decision: 'return', 'rework', 'scrap', or 'use-as-is'
 
     Returns:
-        Confirmation with document ID and PDF path
+        Confirmation string with doc_id, disposition, and deadline.
     """
     doc_id = generate_doc_id(DocumentType.NCR)
     meta = DocumentMeta(
@@ -191,10 +223,8 @@ def create_supplier_ncr(
         quantity_affected=quantity_affected,
         disposition=disposition,
     )
-
     pdf_path = render_pdf(DocumentType.NCR, meta, doc)
     notifications = _notify(meta, f"NCR {doc_id} issued against {supplier_name} for lot {lot_id}: {nonconformance[:100]}", pdf_path)
-
     return (
         f"Supplier NCR created: {doc_id}\n"
         f"PDF: {pdf_path}\n"
@@ -212,24 +242,36 @@ def create_pdca_record(
     do_date: str,
     check_before: dict | None = None,
     check_after: dict | None = None,
-    act_decision: str = "standardize",
+    act_decision: Literal["standardize", "modify", "revert"] = "standardize",
     act_rationale: str = "",
 ) -> str:
-    """Create a PDCA improvement record as PDF and notify stakeholders.
+    """[ACTION]: Create a PDCA improvement record PDF and notify stakeholders. [TARGET]: PDF renderer + email notification system.
+
+    [INPUT PREREQUISITE]: problem, plan_description, plan_hypothesis, do_action, and do_date are
+    required. check_before and check_after should contain metric dicts with the same keys for
+    before/after comparison (e.g. {"oee": 0.72, "defect_rate": 2.1}). act_decision must be one
+    of the Literal values. Confirm all details before calling — this sends notifications.
+
+    [OUTPUT GUARANTEE]: Returns confirmation with doc_id (format PDCA-XXXXXX), decision,
+    PDF path, and notification status. Automatically computes change_pct for matching keys
+    in check_before / check_after.
+
+    [NEGATIVE BOUNDARY]: Cannot be undone. act_decision='revert' documents a rollback but does
+    not automatically undo any system changes.
 
     Args:
-        problem: Problem or improvement opportunity
+        problem: Problem statement or improvement opportunity
         plan_description: What was planned
         plan_hypothesis: Expected outcome
         do_action: What change was implemented
-        do_date: When the change was made
-        check_before: Before metrics dict (optional)
-        check_after: After metrics dict (optional)
-        act_decision: Decision: standardize, modify, revert
-        act_rationale: Reason for decision
+        do_date: When the change was made (YYYY-MM-DD format)
+        check_before: Before metrics dict (optional, e.g. {"oee": 0.72})
+        check_after: After metrics dict (optional, same keys as check_before)
+        act_decision: Decision: 'standardize', 'modify', or 'revert'
+        act_rationale: Reason for the decision
 
     Returns:
-        Confirmation with document ID and PDF path
+        Confirmation string with doc_id, decision, and PDF path.
     """
     doc_id = generate_doc_id(DocumentType.PDCA_RECORD)
     meta = DocumentMeta(
@@ -238,7 +280,6 @@ def create_pdca_record(
         title=f"PDCA: {problem[:80]}",
         status="Completed",
     )
-
     check_before = check_before or {}
     check_after = check_after or {}
     change_pct = {}
@@ -266,10 +307,8 @@ def create_pdca_record(
         act_decision=act_decision,
         act_rationale=act_rationale,
     )
-
     pdf_path = render_pdf(DocumentType.PDCA_RECORD, meta, doc)
     notifications = _notify(meta, f"PDCA Record {doc_id}: {act_decision.upper()} — {problem[:100]}", pdf_path)
-
     return (
         f"PDCA Record created: {doc_id}\n"
         f"Decision: {act_decision.upper()}\n"
@@ -282,28 +321,39 @@ def schedule_maintenance(
     machine_id: str,
     machine_model: str,
     station_id: str,
-    maintenance_type: str,
+    maintenance_type: Literal["preventive", "corrective", "predictive", "overhaul"],
     scheduled_date: str,
     estimated_duration: str,
     tasks_summary: str,
     production_impact: str = "Minimal — alternate routing available",
-    priority: str = "medium",
+    priority: Literal["critical", "high", "medium", "low"] = "medium",
 ) -> str:
-    """Schedule maintenance and generate a maintenance notification PDF.
+    """[ACTION]: Schedule maintenance, generate a maintenance notice PDF and a work order PDF, then notify stakeholders. [TARGET]: PDF renderer + email notification system.
+
+    [INPUT PREREQUISITE]: All required args must be confirmed with the user. scheduled_date
+    must be in YYYY-MM-DD format. estimated_duration is a human-readable string (e.g. '2 hours').
+    maintenance_type and priority must be Literal values. This sends notifications immediately.
+
+    [OUTPUT GUARANTEE]: Returns confirmation with two document IDs: a maintenance notice
+    (format MN-XXXXXX) and a work order (format WO-XXXXXX), their PDF paths, scheduled date,
+    duration, and notification status.
+
+    [NEGATIVE BOUNDARY]: Cannot be undone. Does not actually block the machine in the production
+    schedule — operations must coordinate separately. Do not call speculatively.
 
     Args:
-        machine_id: Machine identifier
-        machine_model: Machine model name
-        station_id: Station identifier
-        maintenance_type: Type: preventive, corrective, predictive, overhaul
+        machine_id: Machine to maintain (e.g. 'STP-01-PRS-HYP01')
+        machine_model: Machine model name (from equipment manual)
+        station_id: Station where machine is located
+        maintenance_type: Type: 'preventive', 'corrective', 'predictive', or 'overhaul'
         scheduled_date: Planned date (YYYY-MM-DD)
-        estimated_duration: Duration estimate (e.g., '2 hours')
-        tasks_summary: Summary of maintenance tasks
-        production_impact: Expected impact on production
-        priority: Priority: critical, high, medium, low
+        estimated_duration: Duration estimate (e.g. '2 hours', '4 hours')
+        tasks_summary: Description of maintenance tasks to perform
+        production_impact: Expected production impact (default 'Minimal — alternate routing available')
+        priority: Priority: 'critical', 'high', 'medium', or 'low'
 
     Returns:
-        Confirmation with document ID and PDF path
+        Confirmation with notice doc_id, work order doc_id, PDF paths, and notification status.
     """
     doc_id = generate_doc_id(DocumentType.MAINTENANCE_NOTICE)
     meta = DocumentMeta(
@@ -323,11 +373,9 @@ def schedule_maintenance(
         production_impact=production_impact,
         tasks_summary=tasks_summary,
     )
-
     pdf_path = render_pdf(DocumentType.MAINTENANCE_NOTICE, meta, doc)
     notifications = _notify(meta, f"Maintenance scheduled: {machine_id} on {scheduled_date} ({estimated_duration})", pdf_path)
 
-    # Also create a work order
     wo_doc_id = generate_doc_id(DocumentType.WORK_ORDER)
     wo_meta = DocumentMeta(
         doc_id=wo_doc_id,

@@ -11,6 +11,7 @@ class InventoryGenerator(BaseGenerator):
     """Generates inventory snapshot tables for Postgres."""
 
     def generate(self) -> dict[str, list[dict[str, Any]]]:
+        """Generate raw material, consumables, and spare parts inventory snapshots."""
         return {
             "raw_material_inventory": self._generate_raw_material_inventory(),
             "consumables_inventory": self._generate_consumables(),
@@ -18,6 +19,7 @@ class InventoryGenerator(BaseGenerator):
         }
 
     def _generate_raw_material_inventory(self) -> list[dict[str, Any]]:
+        """Generate one raw material stock snapshot row per material type."""
         materials = [
             ("RAW-STL-001", "Steel sheet 1.2mm CR", "kg", 5000, 2000),
             ("RAW-STL-002", "Steel sheet 0.8mm CR", "kg", 3000, 1500),
@@ -50,6 +52,7 @@ class InventoryGenerator(BaseGenerator):
         return rows
 
     def _generate_consumables(self) -> list[dict[str, Any]]:
+        """Generate consumable inventory rows for each station using stage-specific templates."""
         consumable_templates = {
             "STP": [
                 ("Stamping lubricant", "L", 200, 50, 40.0),
@@ -101,6 +104,7 @@ class InventoryGenerator(BaseGenerator):
         return rows
 
     def _generate_spare_parts(self) -> list[dict[str, Any]]:
+        """Generate spare parts inventory rows for each machine based on its type."""
         parts_by_type = {
             "HYP": [
                 ("SP-HYP-001", "Hydraulic pump assembly", 2800.0, 14),

@@ -1,4 +1,42 @@
 services:
+  # ── Seed (one-shot init container) ─────────────────────────────
+  # Runs datagen + RAG indexing on first boot; skipped on restart
+  # because it touches /data/.seeded in a named volume.
+  datagen:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.api
+    command: >
+      sh -c "
+        if [ ! -f /data/.seeded ]; then
+          echo '[datagen] seeding databases (180 days, seed=42)...' &&
+          python -m src.datagen generate --days 180 --seed 42 &&
+          echo '[datagen] indexing RAG corpus...' &&
+          python -m src.rag.embedder --index-all &&
+          touch /data/.seeded &&
+          echo '[datagen] done';
+        else
+          echo '[datagen] already seeded, skipping';
+        fi
+      "
+    env_file: .env
+    environment:
+      POSTGRES_HOST: postgres
+      CLICKHOUSE_HOST: clickhouse
+      CHROMA_HOST: chroma
+      CHROMA_PORT: 8000
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    volumes:
+      - seed_marker:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      chroma:
+        condition: service_started
+    restart: "no"
+
   # ── Application ────────────────────────────────────────────────
   api:
     build:
@@ -7,6 +45,12 @@ services:
     ports:
       - "8000:8000"
     env_file: .env
+    environment:
+      POSTGRES_HOST: postgres
+      CLICKHOUSE_HOST: clickhouse
+      CHROMA_HOST: chroma
+      CHROMA_PORT: 8000
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
       postgres:
         condition: service_healthy
@@ -16,6 +60,8 @@ services:
         condition: service_started
       kafka:
         condition: service_healthy
+      datagen:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
       interval: 30s
@@ -29,7 +75,8 @@ services:
     ports:
       - "3000:80"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
 
   # ── Databases ──────────────────────────────────────────────────
   postgres:
@@ -120,6 +167,8 @@ services:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
       GF_AUTH_ANONYMOUS_ENABLED: "true"
+      # Install the ClickHouse datasource plugin on first start
+      GF_INSTALL_PLUGINS: "grafana-clickhouse-datasource"
     volumes:
       - ./infra/grafana/provisioning:/etc/grafana/provisioning
       - ./infra/grafana/dashboards:/var/lib/grafana/dashboards
@@ -128,3 +177,4 @@ volumes:
   postgres_data:
   clickhouse_data:
   chroma_data:
+  seed_marker:
