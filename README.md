@@ -1,4 +1,4 @@
-# PrimeEV Motors — Factory Floor AI Agent
+# PrimeEV Motors Factory Floor AI Agent
 
 Multi-agent AI system that helps manufacturing engineers **diagnose, decide, and act** on an electric vehicle (EV) assembly factory floor.
 
@@ -20,21 +20,21 @@ https://github.com/user-attachments/assets/21bc6cf0-a9b0-4afc-8b69-93107fa1188e
 |-----------|------------|
 | ![Dashboard](assets/app_dashboard.png) | ![Agent Chat](assets/app_agent.png) |
 
-| Stations — Live Sensors | Analytics |
+| Live Sensor Stations | Analytics |
 |-------------------------|-----------|
 | ![Stations](assets/app_stations.png) | ![Analytics](assets/app_analytics.png) |
 
-**VIN (Vehicle Identification Number) Tracker** — full quality history per vehicle across every station
+**VIN (Vehicle Identification Number) Tracker**: full quality history per vehicle across every station
 
 ![VIN Tracker](assets/app_vin_tracker.png)
 
 ### Grafana
 
-| Factory Overview | Process Capability — SPC (Statistical Process Control) / Cpk (Process Capability Index) |
+| Factory Overview | Process Capability: SPC (Statistical Process Control) / Cpk (Process Capability Index) |
 |-----------------|-------------------------------|
 | ![Factory Overview](assets/grafana_factory_overview.png) | ![Process Capability](assets/grafana_process_capability.png) |
 
-| Equipment Reliability — MTBF (Mean Time Between Failures) / MTTR (Mean Time To Repair) | Agent Performance |
+| Equipment Reliability: MTBF (Mean Time Between Failures) / MTTR (Mean Time To Repair) | Agent Performance |
 |------------------------------------|-------------------|
 | ![Equipment Reliability](assets/grafana_equipment_reliability.png) | ![Agent Performance](assets/grafana_agent_performance.png) |
 
@@ -82,7 +82,7 @@ https://github.com/user-attachments/assets/21bc6cf0-a9b0-4afc-8b69-93107fa1188e
 
 ## Factory Domain
 
-**PrimeEV Motors** — fictional EV original equipment manufacturer (OEM), plant code `PE-FRE`. 5-stage assembly line, 15 stations, ~30 machines, 3 vehicle models, ~80 vehicles/day, 3 shifts.
+**PrimeEV Motors** is a fictional EV original equipment manufacturer (OEM), plant code `PE-FRE`. 5-stage assembly line, 15 stations, ~30 machines, 3 vehicle models, ~80 vehicles/day, 3 shifts.
 
 ### Stages, Stations & Defect Types
 
@@ -146,11 +146,11 @@ Sensor address format: `{MACHINE_ID}:{SENSOR_TYPE}` → e.g. `STP-01-PRS-HYP01:T
 
 ### Vehicle Models & Components
 
-**Models:** PE-SD100 (Sedan 100), PE-SV200 (SUV 200), PE-CP300 (Compact 300) — all model year 2026.
+**Models:** PE-SD100 (Sedan 100), PE-SV200 (SUV 200), PE-CP300 (Compact 300), all model year 2026.
 
 **VIN format:** `PEF-{MODEL}-{YY}-{SEQ:06d}` → e.g. `PEF-SD100-26-004521`
 
-**Component categories — BOM (Bill of Materials) / MRP (Material Requirements Planning):**
+**Component categories, BOM (Bill of Materials) / MRP (Material Requirements Planning):**
 
 | Code | Category | Examples |
 |------|----------|---------|
@@ -198,7 +198,7 @@ Sensor address format: `{MACHINE_ID}:{SENSOR_TYPE}` → e.g. `STP-01-PRS-HYP01:T
 ```bash
 # 1. Copy env file and add your Anthropic API key
 cp .env.example .env
-# Edit .env — set ANTHROPIC_API_KEY=sk-ant-...
+# Edit .env and set ANTHROPIC_API_KEY=sk-ant-...
 
 # 2. Boot everything
 docker compose up
@@ -253,7 +253,6 @@ pytest evals/ -v --live --llm-judge
 | Vector Store | ChromaDB | RAG (Retrieval-Augmented Generation) over SOPs (Standard Operating Procedures), manuals, FMEAs (Failure Mode and Effects Analysis), troubleshooting DB |
 | Streaming | Apache Kafka | Live sensor feeds, real-time rolling Cpk |
 | Monitoring | Prometheus + Grafana | Agent latency, tool calls, error rates, factory KPIs |
-| CI/CD (Continuous Integration / Continuous Deployment) | GitHub Actions | Lint · type-check · test · eval on every PR |
 
 ---
 
@@ -267,7 +266,7 @@ Root Agent  ──routes by intent──►  Equipment | Quality | Production | 
 
 The root agent classifies every query and delegates to the appropriate sub-agent. Sub-agents call their tool set, optionally search the RAG corpus, then synthesize a response with cited evidence and a confidence score.
 
-### Equipment Agent — 7 tool modules, 19 tools
+### Equipment Agent: 7 tool modules, 19 tools
 
 | Module | Tools |
 |--------|-------|
@@ -281,7 +280,7 @@ The root agent classifies every query and delegates to the appropriate sub-agent
 
 Capabilities: root cause analysis, sensor diagnostics, Remaining Useful Life (RUL) / degradation tracking, MTBF/MTTR reporting, maintenance scheduling, spare parts checks.
 
-### Quality Agent — 4 tool modules, 21 tools
+### Quality Agent: 4 tool modules, 21 tools
 
 | Module | Tools |
 |--------|-------|
@@ -292,7 +291,7 @@ Capabilities: root cause analysis, sensor diagnostics, Remaining Useful Life (RU
 
 Capabilities: SPC / Western Electric rules, Cpk trending, Acceptable Quality Level (AQL) lot decisions, supplier quality, rework/scrap Cost of Poor Quality (COPQ).
 
-### Production Agent — 7 tool modules, 20 tools
+### Production Agent: 7 tool modules, 20 tools
 
 | Module | Tools |
 |--------|-------|
@@ -306,7 +305,7 @@ Capabilities: SPC / Western Electric rules, Cpk trending, Acceptable Quality Lev
 
 Capabilities: OEE breakdown, VIN traceability, BOM/MRP queries, shift/station comparisons, inventory reorder alerts.
 
-### Improvement Agent (PDCA — Plan-Do-Check-Act) — 6 tool modules, 13 tools
+### Improvement Agent (PDCA, Plan-Do-Check-Act): 6 tool modules, 13 tools
 
 | Module | Tools |
 |--------|-------|
@@ -319,7 +318,7 @@ Capabilities: OEE breakdown, VIN traceability, BOM/MRP queries, shift/station co
 
 Capabilities: before/after quantified analysis, PDCA cycle documentation, FMEA risk assessment, Six Sigma / 8D (Eight Disciplines) case study RAG lookup.
 
-### Action Agent — 5 tool modules, 11 tools
+### Action Agent: 5 tool modules, 11 tools
 
 | Module | Tools |
 |--------|-------|
@@ -329,7 +328,7 @@ Capabilities: before/after quantified analysis, PDCA cycle documentation, FMEA r
 | `sensor_tools` | `get_sensor_trend` |
 | `rag_tools` | `search_sop`, `search_past_issues` |
 
-All action tools are irreversible — the agent confirms all required fields before calling.
+All action tools are irreversible, so the agent confirms all required fields before calling.
 
 ---
 
@@ -341,7 +340,7 @@ All action tools are irreversible — the agent confirms all required fields bef
 
 | Metric | Run 1 | Run 2 | Run 3 | Threshold |
 |--------|-------|-------|-------|-----------|
-| **Overall** | 0.701 | 0.761 | **0.789** | — |
+| **Overall** | 0.701 | 0.761 | **0.789** | ≥ 0.75 ✓ |
 | Tool Selection | 0.590 | 0.640 | 0.757 | ≥ 0.70 ✓ |
 | Tool Parameters | 0.723 | 0.717 | **0.766** | ≥ 0.75 ✓ |
 | Routing Accuracy | 0.690 | 0.929 | **0.949** | ≥ 0.90 ✓ |
@@ -358,15 +357,15 @@ All action tools are irreversible — the agent confirms all required fields bef
 | Production | 11 | 0.806 | 0.879 | 1.000 | 0.818 | 1.000 | 0.455 |
 | Improvement | 6 | 0.744 | 0.503 | 0.833 | 0.546 | 1.000 | 0.583 |
 | Action | 7 | 0.743 | 0.679 | 1.000 | 0.714 | 1.000 | 0.563 |
-| Robustness | 51 | 0.799 | 0.816 | 0.922 | 0.865 | 0.971 | 0.433 |
-| **OVERALL** | **99** | **0.789** | **0.757** | **0.949** | **0.788** | **0.985** | 0.530 |
+| Robustness | 52 | 0.799 | 0.816 | 0.922 | 0.865 | 0.971 | 0.433 |
+| **OVERALL** | **100** | **0.789** | **0.757** | **0.949** | **0.788** | **0.985** | 0.530 |
 
 ### Graders
 
-**Tier 1 — deterministic (always run, no LLM cost):**
+**Tier 1 (deterministic, always run, no LLM cost):**
 `tool_selection` · `tool_parameters` · `routing_accuracy` · `trajectory` · `safety` · `correctness`
 
-**Tier 2 — LLM judge (`--llm-judge` flag):**
+**Tier 2 (LLM judge, `--llm-judge` flag):**
 `faithfulness` (≥ 0.75) · `relevance` (≥ 0.70)
 
 Pass threshold: ≥ 0.60 per case overall score. CI runs Tier 1 on every PR.
@@ -386,7 +385,7 @@ Generates realistic, correlated factory data borrowing statistical distributions
 | SECOM Semiconductor | Quality inspection pass/fail distributions |
 | Steel Industry Energy Consumption | Energy temporal patterns per machine type |
 
-All data shares consistent entity IDs (VINs, machine IDs, batch IDs) and causal correlations — temperature rise → failure rate, tool wear → dimensional variance, supplier lot quality → downstream defects.
+All data shares consistent entity IDs (VINs, machine IDs, batch IDs) and causal correlations: temperature rise → failure rate, tool wear → dimensional variance, supplier lot quality → downstream defects.
 
 ### RAG Corpus (34 documents indexed in ChromaDB)
 
@@ -449,17 +448,27 @@ factory-floor-agent/
 
 ---
 
+## Challenges
+
+**Fake data is worse than no data.** Early tool stubs returned plausible-looking hardcoded values, making it impossible to tell a wrong answer from a missing one. Fixed by replacing every unavailable-data path with an explicit `TERMINAL` state instead of fabricated output.
+
+**Tool-call hallucination is real.** Untyped string parameters let the model invent values that didn't exist in the database. Adding `Literal` type constraints across 20+ parameters cut robustness failures by 22 percentage points.
+
+**Schemas beat prompts.** Telling the agent in the system prompt to default a missing parameter had no effect. It kept asking the user for it anyway. The parameter was still marked `required` in the tool schema; only changing the schema changed the behavior.
+
+---
+
 ## References
 
-1. Matzka, S. — *AI4I 2020 Predictive Maintenance Dataset*, UCI Machine Learning Repository, 2020. [Dataset](https://archive.ics.uci.edu/dataset/601/ai4i+2020+predictive+maintenance+dataset)
-2. Saxena, A. & Goebel, K. — *C-MAPSS Turbofan Engine Degradation Simulation Dataset*, NASA Prognostics Data Repository, 2008. [Dataset](https://www.nasa.gov/intelligent-systems-division/discovery-and-systems-health/pcoe/pcoe-data-set-repository/)
-3. McCann, M. & Johnston, A. — *SECOM Dataset*, UCI Machine Learning Repository, 2008. [Dataset](https://archive.ics.uci.edu/dataset/179/secom)
-4. Seyedzadeh, S. et al. — *Steel Industry Energy Consumption Dataset*, UCI Machine Learning Repository, 2018. [Dataset](https://archive.ics.uci.edu/dataset/851/steel+industry+energy+consumption)
-5. Google — *Agent Development Kit (ADK)*, 2024. [Docs](https://google.github.io/adk-docs/)
-6. Anthropic — *Claude Haiku 4.5*, 2025. [Docs](https://www.anthropic.com)
-7. FastAPI — [fastapi.tiangolo.com](https://fastapi.tiangolo.com)
-8. ChromaDB — [trychroma.com](https://www.trychroma.com)
-9. ClickHouse — [clickhouse.com](https://clickhouse.com)
+1. Matzka, S., *AI4I 2020 Predictive Maintenance Dataset*, UCI Machine Learning Repository, 2020. [Dataset](https://archive.ics.uci.edu/dataset/601/ai4i+2020+predictive+maintenance+dataset)
+2. Saxena, A. & Goebel, K., *C-MAPSS Turbofan Engine Degradation Simulation Dataset*, NASA Prognostics Data Repository, 2008. [Dataset](https://www.nasa.gov/intelligent-systems-division/discovery-and-systems-health/pcoe/pcoe-data-set-repository/)
+3. McCann, M. & Johnston, A., *SECOM Dataset*, UCI Machine Learning Repository, 2008. [Dataset](https://archive.ics.uci.edu/dataset/179/secom)
+4. Seyedzadeh, S. et al., *Steel Industry Energy Consumption Dataset*, UCI Machine Learning Repository, 2018. [Dataset](https://archive.ics.uci.edu/dataset/851/steel+industry+energy+consumption)
+5. Google, *Agent Development Kit (ADK)*, 2024. [Docs](https://google.github.io/adk-docs/)
+6. Anthropic, *Claude Haiku 4.5*, 2025. [Docs](https://www.anthropic.com)
+7. FastAPI: [fastapi.tiangolo.com](https://fastapi.tiangolo.com)
+8. ChromaDB: [trychroma.com](https://www.trychroma.com)
+9. ClickHouse: [clickhouse.com](https://clickhouse.com)
 
 ---
 
@@ -467,4 +476,4 @@ factory-floor-agent/
 
 **Kirubhakaran Meenakshi Sundaram**
 
-[LinkedIn](https://www.linkedin.com/in/kirubhakaranm/) | [Portfolio](https://github.com/kirubhakaranm/street-gaussians-vision)
+[LinkedIn](https://www.linkedin.com/in/kirubhakaranm/) | [Portfolio](https://kirubhakaranm.github.io/)
