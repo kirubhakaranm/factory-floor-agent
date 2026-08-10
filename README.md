@@ -68,8 +68,8 @@ https://github.com/user-attachments/assets/21bc6cf0-a9b0-4afc-8b69-93107fa1188e
                 ▼      ▼      ▼                 └──────────────────┘
          ┌────────┐ ┌──────┐ ┌────────┐
          │Postgres│ │Click │ │Chroma  │
-         │(25 tbl)│ │House │ │DB (RAG)│
-         └────────┘ │(7tbl)│ └────────┘
+         │(40 tbl)│ │House │ │DB (RAG)│
+         └────────┘ │(8tbl)│ └────────┘
                     └──┬───┘
                        │
               ┌────────┴────────┐
@@ -248,8 +248,8 @@ pytest evals/ -v --live --llm-judge
 | LLM (Large Language Model) | Claude Haiku 4.5 (Anthropic) | Reasoning, diagnosis, recommendations |
 | Backend | FastAPI + SSE (Server-Sent Events) | API server with streaming chat |
 | Frontend | React + TypeScript + Tailwind + recharts | Dashboard, chat UI, analytics |
-| Operational DB | PostgreSQL 16 | Failures, work orders, inspections, BOMs (25 tables) |
-| Analytics DB | ClickHouse 24.x | Sensor telemetry, OEE, SPC, reliability (~7 tables, ~11M rows) |
+| Operational DB | PostgreSQL 16 | Failures, work orders, inspections, BOMs (40 tables) |
+| Analytics DB | ClickHouse 24.x | Sensor telemetry, OEE, SPC, reliability (8 tables, ~11M rows) |
 | Vector Store | ChromaDB | RAG (Retrieval-Augmented Generation) over SOPs (Standard Operating Procedures), manuals, FMEAs (Failure Mode and Effects Analysis), troubleshooting DB |
 | Streaming | Apache Kafka | Live sensor feeds, real-time rolling Cpk |
 | Monitoring | Prometheus + Grafana | Agent latency, tool calls, error rates, factory KPIs |
@@ -399,6 +399,27 @@ All data shares consistent entity IDs (VINs, machine IDs, batch IDs) and causal 
 | Troubleshooting DB | 4 | Historical issues with root causes |
 | Case studies | 1 | 5-Why paint adhesion example |
 | PDCA records | 1 | Completed PDCA improvement record |
+
+### PostgreSQL Tables (40)
+
+| Group | Tables |
+|-------|--------|
+| Reference / Master Data | `lines`, `stations`, `machines`, `operators`, `technicians`, `crews`, `shifts`, `vehicle_models`, `components`, `suppliers` |
+| Supply Chain | `raw_materials`, `receiving_inspections`, `supplier_scorecards`, `supplier_ncrs` |
+| Production | `production_orders`, `production_batches`, `vin_registry`, `bill_of_materials`, `component_consumption` |
+| Quality | `dimensional_inspections`, `sampling_inspections`, `visual_checklists`, `rework_records`, `scrap_records`, `deviation_records`, `defect_codes`, `inspection_plans`, `aql_schemes`, `measurement_specs` |
+| Equipment / Maintenance | `equipment_failures`, `maintenance_history`, `work_orders`, `spare_parts_inventory` |
+| Inventory | `raw_material_inventory`, `consumables_inventory`, `finished_goods`, `inventory_transactions` |
+| Agent / Observability | `agent_sessions`, `agent_interactions`, `agent_tool_calls` |
+
+### ClickHouse Tables (8)
+
+| Group | Tables |
+|-------|--------|
+| Sensor Telemetry | `sensor_readings` (~9.95M rows), `energy_consumption` |
+| Analytics | `oee_metrics`, `spc_measurements`, `process_capability_history` |
+| Reliability | `degradation_state`, `machine_reliability_metrics` |
+| Agent | `agent_interactions` |
 
 ---
 
