@@ -368,8 +368,7 @@ All action tools are irreversible, so the agent confirms all required fields bef
 **Tier 2 (LLM judge, `--llm-judge` flag):**
 `faithfulness` (≥ 0.75) · `relevance` (≥ 0.70)
 
-Pass threshold: ≥ 0.60 per case overall score. CI runs Tier 1 on every PR.
-
+Pass threshold: ≥ 0.60 per case overall score.
 ---
 
 ## Data Model
