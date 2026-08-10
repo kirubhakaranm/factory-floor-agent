@@ -249,7 +249,7 @@ pytest evals/ -v --live --llm-judge
 | Backend | FastAPI + SSE (Server-Sent Events) | API server with streaming chat |
 | Frontend | React + TypeScript + Tailwind + recharts | Dashboard, chat UI, analytics |
 | Operational DB | PostgreSQL 16 | Failures, work orders, inspections, BOMs (25 tables) |
-| Analytics DB | ClickHouse 24.x | Sensor telemetry, OEE, SPC, reliability (~7 tables, ~25M rows) |
+| Analytics DB | ClickHouse 24.x | Sensor telemetry, OEE, SPC, reliability (~7 tables, ~11M rows) |
 | Vector Store | ChromaDB | RAG (Retrieval-Augmented Generation) over SOPs (Standard Operating Procedures), manuals, FMEAs (Failure Mode and Effects Analysis), troubleshooting DB |
 | Streaming | Apache Kafka | Live sensor feeds, real-time rolling Cpk |
 | Monitoring | Prometheus + Grafana | Agent latency, tool calls, error rates, factory KPIs |
